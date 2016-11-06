@@ -3,8 +3,8 @@
     <string name="app_logo">App logo</string>
     <string name="app_moto">Feel safe at any corner on campus!</string>
     <string name="get_started">GET STARTED</string>
-    <string name="get_token">VERIFY EMAIL</string>
-    <string name="verify_code">VERIFY CODE</string>
+    <string name="get_token">GET CODE</string>
+    <string name="verify_code">VERIFY</string>
     <string name="email_form">Provide your Trinity email</string>
     <string name="get_token_exp">You will recieve a verificaiton code</string>
     <string name="verif_code_form">Enter code you received through email</string>

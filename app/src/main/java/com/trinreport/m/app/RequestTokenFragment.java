@@ -88,6 +88,7 @@ public class RequestTokenFragment extends Fragment {
 
                 if (!Utilities.validate_email(email, "trincoll.edu")) {
                     emailEditText.setError("Invalid emaill address! Try again.");
+                    return;
                 }
 
                 // send post request to authentication server
@@ -116,6 +117,7 @@ public class RequestTokenFragment extends Fragment {
                     SharedPreferences sf = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     SharedPreferences.Editor editor = sf.edit();
                     editor.putString(key, auth_u_id);
+                    editor.commit();
                     // open VerifyCodeActivity
                     Intent i = new Intent(getActivity(), VerifyCodeActivity.class);
                     startActivity(i);
