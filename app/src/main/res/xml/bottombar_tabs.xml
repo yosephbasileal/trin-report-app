@@ -1,0 +1,18 @@
+<tabs>
+    <tab
+        id="@+id/tab_emergency"
+        icon="@drawable/alarm"
+        title="Emergency"/>
+    <tab
+        id="@+id/tab_report"
+        icon="@drawable/ic_form"
+        title="Report"/>
+    <tab
+        id="@+id/tab_history"
+        icon="@drawable/ic_history"
+        title="History"/>
+    <tab
+        id="@+id/tab_settings"
+        icon="@drawable/ic_user"
+        title="Settings"/>
+</tabs>

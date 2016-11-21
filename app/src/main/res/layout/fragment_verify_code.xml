@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.trinreport.m.app.RequestTokenFragment"
+    tools:context="com.trinreport.m.app.Authentication.RequestTokenFragment"
     android:orientation="vertical"
     android:gravity="center">
 

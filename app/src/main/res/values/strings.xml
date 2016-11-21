@@ -8,4 +8,7 @@
     <string name="email_form">Provide your Trinity email</string>
     <string name="get_token_exp">You will recieve a verificaiton code</string>
     <string name="verif_code_form">Enter code you received through email</string>
+
+<!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

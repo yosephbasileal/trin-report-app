@@ -1,0 +1,45 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.trinreport.m.app.MainTabs.EmergencyTabFragment"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:text="Emergency?"
+        android:textSize="40sp"
+        android:textAlignment="center"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:layout_weight="0.9"/>
+
+    <Button
+        android:layout_weight="0.1"
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="TAP + HOLD\nFOR\nASSISTANCE"
+        android:textStyle="bold"
+        android:textSize="18sp"
+        android:id="@+id/get_location"
+        android:background="@drawable/round_button"/>
+
+    <TextView
+        android:layout_gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="A notification will be sent to Campus Safety along with your personal information.\n\nYou will be notified when an officer is on their way!"
+        android:textSize="16sp"
+        android:textAlignment="center"
+        android:paddingTop="48dp"
+        android:paddingBottom="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:layout_weight="0.9"/>
+
+</LinearLayout>

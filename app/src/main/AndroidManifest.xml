@@ -10,16 +10,16 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar" >
-        <activity android:name=".StartPageActivity" >
+        <activity android:name=".Authentication.StartPageActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".RequestTokenActivity" >
+        <activity android:name=".Authentication.RequestTokenActivity" >
         </activity>
-        <activity android:name=".VerifyCodeActivity" >
+        <activity android:name=".Authentication.VerifyCodeActivity" >
         </activity>
         <activity android:name=".MainActivity" >
         </activity>

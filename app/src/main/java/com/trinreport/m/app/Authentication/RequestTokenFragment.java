@@ -1,12 +1,13 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.Authentication;
 
-import android.app.Activity;
+
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -20,6 +21,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.R;
+import com.trinreport.m.app.Utils.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,28 +30,25 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
- * VerifyCodeFragment
+ * GetTokenFragment
  */
-public class VerifyCodeFragment extends Fragment {
+public class RequestTokenFragment extends Fragment {
 
-    private static final String TAG = "VerifyCodeFragment";
-
-    private EditText verifCodeText;
+    private static final String TAG = "GetTokenFragment";
 
     /**
      * Factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @return A new instance of fragment VerifyCodeFragment.
+     * @return A new instance of fragment GetTokenFragment.
      */
-    public static VerifyCodeFragment newInstance() {
-        VerifyCodeFragment fragment = new VerifyCodeFragment();
+    public static RequestTokenFragment newInstance() {
+        RequestTokenFragment fragment = new RequestTokenFragment();
         return fragment;
     }
 
-    public VerifyCodeFragment() {
+    public RequestTokenFragment() {
         // empty
     }
 
@@ -61,55 +61,69 @@ public class VerifyCodeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View v = inflater.inflate(R.layout.fragment_verify_code, container, false);
+        View v = inflater.inflate(R.layout.fragment_request_token, container, false);
 
-        Button verifyTokenButton = (Button) v.findViewById(R.id.verify_code_button);
-        verifCodeText = (EditText) v.findViewById(R.id.verification_code);
+        Button getTokenButton = (Button) v.findViewById(R.id.get_token_button);
+        final EditText emailEditText = (EditText) v.findViewById(R.id.email_address);
 
-        verifyTokenButton.setOnClickListener(new View.OnClickListener() {
+        emailEditText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                // empty
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                // empty
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                emailEditText.setError(null);
+            }
+        });
+        getTokenButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                String verif_code = verifCodeText.getText().toString();
+                String email = emailEditText.getText().toString();
+
+                if (!Utilities.validate_email(email, "trincoll.edu")) {
+                    emailEditText.setError("Invalid emaill address! Try again.");
+                    return;
+                }
 
                 // send post request to authentication server
-                String key = "auth_user_id";
-                SharedPreferences sf = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                String auth_u_id = sf.getString(key, "");
-                String url = "http://trinreport.appspot.com/verify";
+                String url = "http://trinreport.appspot.com/request";
                 Map<String, String> data = new HashMap();
-                data.put("code", verif_code);
-                data.put(key, auth_u_id);
-                verifyCode(url, data);
+                data.put("email", email);
+                requestAuthToken(url, data);
             }
         });
         return v;
     }
 
-    private void verifyCode(final String url, final Map<String,String> data) {
+    private void requestAuthToken(final String url, final Map<String,String> data) {
         RequestQueue requestQueue = Volley.newRequestQueue(this.getActivity());
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Response: " + response);
                 try {
-                    // get auth token assigned by authentication server
-                    String key = "auth_token";
+                    // get user id assigned by authentication server
+                    String key = "auth_user_id";
                     JSONObject jsonObj = new JSONObject(response);
-                    String auth_token = jsonObj.get(key).toString();
-                    Log.d(TAG, "Auth token: " + auth_token);
+                    String auth_u_id = jsonObj.get(key).toString();
+                    Log.d(TAG, "User ID: " + auth_u_id);
                     // save user id to shared prefs
                     SharedPreferences sf = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     SharedPreferences.Editor editor = sf.edit();
-                    editor.putString(key, auth_token);
-                    // update user state to authenticated
-                    editor.putBoolean("authenticated", true);
+                    editor.putString(key, auth_u_id);
                     editor.commit();
-                    // open MainActivity
-                    Intent i = new Intent(getActivity(), MainActivity.class);
+                    // open VerifyCodeActivity
+                    Intent i = new Intent(getActivity(), VerifyCodeActivity.class);
                     startActivity(i);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
-                    verifCodeText.setError("Authentication failed! Enter a valid code.");
                 }
 
             }
