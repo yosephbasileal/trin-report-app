@@ -1,0 +1,34 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.trinreport.m.app.mainTabs.SettingsTabFragment">
+
+
+        <PreferenceCategory android:title="Personal Information">
+            <EditTextPreference
+                android:title="Name"
+                android:key="username"
+                android:singleLine="true"
+                android:inputType="text" />
+
+            <EditTextPreference
+                android:title="Dorm"
+                android:summary="Eg. Funston 310"
+                android:key="userdorm"
+                android:singleLine="true"
+                android:inputType="text" />
+
+            <EditTextPreference
+                android:title="Phone Number"
+                android:key="userphone"
+                android:singleLine="true"
+                android:inputType="phone"/>
+
+            <EditTextPreference
+                android:title="Trinity ID"
+                android:key="userid"
+                android:singleLine="true"
+                android:inputType="number" />
+        </PreferenceCategory>
+
+</FrameLayout>

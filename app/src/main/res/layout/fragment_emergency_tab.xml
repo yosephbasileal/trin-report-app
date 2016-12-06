@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.trinreport.m.app.MainTabs.EmergencyTabFragment"
+    tools:context="com.trinreport.m.app.mainTabs.EmergencyTabFragment"
     android:orientation="vertical">
 
     <TextView
@@ -23,17 +23,18 @@
         android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="TAP + HOLD\nFOR\nASSISTANCE"
+        android:text="TAP and HOLD \n FOR \n 3 SECONDS"
         android:textStyle="bold"
+        android:textColor="#ffffff"
         android:textSize="18sp"
-        android:id="@+id/get_location"
+        android:id="@+id/button_emergency"
         android:background="@drawable/round_button"/>
 
     <TextView
         android:layout_gravity="center"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="A notification will be sent to Campus Safety along with your personal information.\n\nYou will be notified when an officer is on their way!"
+        android:text="You will be notified when help is on the way!"
         android:textSize="16sp"
         android:textAlignment="center"
         android:paddingTop="48dp"

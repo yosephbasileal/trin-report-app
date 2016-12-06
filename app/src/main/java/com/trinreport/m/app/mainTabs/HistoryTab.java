@@ -1,8 +1,8 @@
-package com.trinreport.m.app.MainTabs;
+package com.trinreport.m.app.mainTabs;
 
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;

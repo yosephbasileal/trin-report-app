@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <EditTextPreference
+            android:title="Name"
+            android:key="username"
+            android:singleLine="true"
+            android:inputType="text" />
+
+        <EditTextPreference
+            android:title="Dorm"
+            android:summary="Eg. Funston 310"
+            android:key="userdorm"
+            android:singleLine="true"
+            android:inputType="text" />
+
+        <EditTextPreference
+            android:title="Phone Number"
+            android:key="userphone"
+            android:singleLine="true"
+            android:inputType="phone"/>
+
+    <EditTextPreference
+        android:title="Email"
+        android:key="useremail"
+        android:singleLine="true"
+        android:inputType="textEmailAddress"/>
+
+        <EditTextPreference
+            android:title="Trinity ID"
+            android:key="userid"
+            android:singleLine="true"
+            android:inputType="number" />
+
+</PreferenceScreen>

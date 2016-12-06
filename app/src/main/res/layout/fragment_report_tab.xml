@@ -1,13 +1,37 @@
-<FrameLayout
+<LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.trinreport.m.app.MainTabs.ReportTabFragment">
+    android:orientation="vertical">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="report tab" />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/call_csafety_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Call Campus Safety"/>
+    <Button
+        android:id="@+id/call_health_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Call health cetner"/>
+
+    <Button
+        android:id="@+id/call_counseling_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Call counseling center"/>
+    <Button
+        android:id="@+id/call_title_9_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Call Title-IX office"/>
+
+    <Button
+        android:id="@+id/add_report_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Submit a Report"
+        android:layout_marginTop="100dp"/>
+
+</LinearLayout>

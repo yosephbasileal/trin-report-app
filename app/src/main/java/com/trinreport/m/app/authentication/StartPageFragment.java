@@ -1,4 +1,4 @@
-package com.trinreport.m.app.Authentication;
+package com.trinreport.m.app.authentication;
 
 import android.content.Intent;
 import android.os.Bundle;
