@@ -1,12 +1,12 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.authentication;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.trinreport.m.app.MainActivity;
 
 public class StartPageActivity extends AppCompatActivity {
 
@@ -18,7 +18,12 @@ public class StartPageActivity extends AppCompatActivity {
         SharedPreferences sf = PreferenceManager.getDefaultSharedPreferences(this);
         boolean authenticated = sf.getBoolean("authenticated", false);
 
-        if(authenticated) {
+        // TODO: Next two lines for debuggine purpose only
+        Intent i = new Intent(this, MainActivity.class);
+        startActivity(i);
+
+        // Enable this for authentication
+        /*if(authenticated) {
             Intent i = new Intent(this, MainActivity.class);
             startActivity(i);
         } else {
@@ -28,6 +33,6 @@ public class StartPageActivity extends AppCompatActivity {
             FragmentManager fm = getSupportFragmentManager();
             Fragment frag = new StartPageFragment();
             fm.beginTransaction().add(R.id.start_page_activity, frag).commit();
-        }
+        }*/
     }
 }

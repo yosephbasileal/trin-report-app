@@ -1,9 +1,7 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.authentication;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -20,6 +18,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.MainActivity;
+import com.trinreport.m.app.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;

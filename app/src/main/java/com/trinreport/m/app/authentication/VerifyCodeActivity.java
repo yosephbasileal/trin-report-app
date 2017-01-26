@@ -1,20 +1,22 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.authentication;
 
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-public class RequestTokenActivity extends AppCompatActivity {
+import com.trinreport.m.app.R;
+
+public class VerifyCodeActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_request_token);
+        setContentView(R.layout.activity_verify_code);
 
         // Create a fragment and add to view
         FragmentManager fm = getSupportFragmentManager();
-        Fragment frag = new RequestTokenFragment();
-        fm.beginTransaction().add(R.id.request_token_activity, frag).commit();
+        Fragment frag = new VerifyCodeFragment();
+        fm.beginTransaction().add(R.id.verify_code_activity, frag).commit();
     }
 }

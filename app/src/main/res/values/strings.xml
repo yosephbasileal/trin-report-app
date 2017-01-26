@@ -8,4 +8,13 @@
     <string name="email_form">Provide your Trinity email</string>
     <string name="get_token_exp">You will recieve a verificaiton code</string>
     <string name="verif_code_form">Enter code you received through email</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="title_activity_settings">SettingsActivity</string>
+
+    <string name="date_picker_title">Date of incident:</string>
+    <string name="time_picker_title">Time of incident:</string>
+
+    <string name="emergency_button_notice">You will be notified when help is on the way!</string>
 </resources>

@@ -1,4 +1,4 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.authentication;
 
 
 import android.content.Intent;
@@ -21,7 +21,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.trinreport.m.app.Utils.Utilities;
+import com.trinreport.m.app.R;
+import com.trinreport.m.app.utils.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;

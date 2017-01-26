@@ -1,6 +1,5 @@
-package com.trinreport.m.app.Utils;
+package com.trinreport.m.app.utils;
 
-import java.lang.reflect.Array;
 import java.util.regex.PatternSyntaxException;
 
 /**
