@@ -15,4 +15,6 @@
 
     <string name="date_picker_title">Date of incident:</string>
     <string name="time_picker_title">Time of incident:</string>
+
+    <string name="emergency_button_notice">You will be notified when help is on the way!</string>
 </resources>

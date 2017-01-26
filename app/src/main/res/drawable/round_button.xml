@@ -3,13 +3,13 @@
     <item>
         <shape android:shape="oval">
             <stroke
-                android:color="#09447c"
-                android:width="0dp" />
+                android:color="@color/colorAccent"
+                android:width="5dp" />
             <solid
-                android:color="#3F51B5"/>
+                android:color="@color/colorPrimary"/>
             <size
-                android:width="160dp"
-                android:height="160dp"/>
+                android:width="260dp"
+                android:height="260dp"/>
         </shape>
     </item>
 </selector>
