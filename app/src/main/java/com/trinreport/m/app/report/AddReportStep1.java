@@ -1,4 +1,4 @@
-package com.trinreport.m.app.addReport;
+package com.trinreport.m.app.report;
 
 
 import android.app.Activity;

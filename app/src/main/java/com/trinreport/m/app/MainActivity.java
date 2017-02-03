@@ -9,10 +9,8 @@ import android.support.v7.widget.Toolbar;
 
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
-import com.trinreport.m.app.mainTabs.EmergencyTabFragment;
-import com.trinreport.m.app.mainTabs.HistoryTab;
-import com.trinreport.m.app.mainTabs.ReportTabFragment;
-import com.trinreport.m.app.mainTabs.SettingsTabFragment;
+import com.trinreport.m.app.emergency.EmergencyTabFragment;
+import com.trinreport.m.app.report.ReportTabFragment;
 
 public class MainActivity extends AppCompatActivity {
 

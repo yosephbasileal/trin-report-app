@@ -1,11 +1,12 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.report;
 
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
-import com.trinreport.m.app.addReport.AddReportStep1;
+import com.trinreport.m.app.R;
+import com.trinreport.m.app.report.AddReportStep1;
 
 public class AddReportActivity extends AppCompatActivity {
 

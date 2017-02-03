@@ -1,4 +1,4 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.emergency;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -9,6 +9,8 @@ import android.location.Location;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
+
+import com.trinreport.m.app.R;
 
 public class Emergency extends AppCompatActivity {
 

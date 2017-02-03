@@ -1,4 +1,4 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.emergency;
 
 import android.app.IntentService;
 import android.content.Intent;
@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import android.os.Handler;
 import android.util.Log;
 
 import org.json.JSONException;

@@ -32,13 +32,13 @@
             android:name=".MainActivity"
             android:screenOrientation="portrait" />
         <activity
-            android:name=".AddReportActivity"
+            android:name=".report.AddReportActivity"
             android:screenOrientation="portrait" />
 
-        <activity android:name=".Emergency" />
+        <activity android:name=".emergency.Emergency" />
 
         <service
-            android:name=".EmergencyStatusService"
+            android:name=".emergency.EmergencyStatusService"
             android:exported="false"></service>
     </application>
 

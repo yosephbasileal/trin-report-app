@@ -1,24 +1,20 @@
-package com.trinreport.m.app.mainTabs;
+package com.trinreport.m.app.emergency;
 
 
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
 import android.location.Location;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -26,28 +22,15 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.trinreport.m.app.Emergency;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.authentication.VerifyCodeActivity;
 
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.silvertunnel_ng.netlib.adapter.java.JvmGlobalUtil;
-import org.silvertunnel_ng.netlib.api.NetFactory;
 import org.silvertunnel_ng.netlib.api.NetLayer;
-import org.silvertunnel_ng.netlib.api.NetLayerIDs;
 import org.silvertunnel_ng.netlib.api.NetSocket;
 import org.silvertunnel_ng.netlib.api.util.TcpipNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorHiddenServicePortPrivateNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorHiddenServicePrivateNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorNetLayerUtil;
-import org.silvertunnel_ng.netlib.util.ByteArrayUtil;
-import org.silvertunnel_ng.netlib.util.HttpUtil;
 
-import java.io.File;
-import java.io.IOError;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
