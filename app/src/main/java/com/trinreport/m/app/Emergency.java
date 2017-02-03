@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.location.Location;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,7 +31,7 @@ public class Emergency extends AppCompatActivity {
 
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
         mStatusTextview = (TextView) findViewById(R.id.statusTextView);
-        updateStatus("Status: sent");
+        updateStatus("Not Received");
 
         // start background service for updating status and gps points
         registerBroadcastReceiver();
@@ -51,5 +52,8 @@ public class Emergency extends AppCompatActivity {
 
     private void updateStatus(String status) {
         mStatusTextview.setText(status);
+        if (status.equals("Received")) {
+            mStatusTextview.setTextColor(Color.GREEN);
+        }
     }
 }

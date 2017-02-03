@@ -11,15 +11,37 @@
     tools:context="com.trinreport.m.app.Emergency"
     android:orientation="vertical">
 
-    <TextView
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="14dp"
-        android:layout_marginStart="14dp"
-        android:layout_marginTop="22dp"
-        android:id="@+id/statusTextView" />
+        android:orientation="vertical">
 
-    <Button
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="22dp"
+            android:id="@+id/status"
+            android:text="Status:"
+            android:textSize="30dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14dp"
+            android:layout_marginStart="14dp"
+            android:layout_marginTop="10dp"
+            android:id="@+id/statusTextView"
+            android:text="Not Received"
+            android:textColor="#ff0000"
+            android:textSize="50dp"/>
+
+    </LinearLayout>
+
+
+
+<!--    <Button
         android:text="Call Camps Safety"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -29,7 +51,7 @@
         android:text="Text Campus Safety"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button2" />
+        android:id="@+id/button2" />-->
 
 
 </LinearLayout>

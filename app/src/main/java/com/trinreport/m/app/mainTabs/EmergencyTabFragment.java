@@ -29,7 +29,7 @@ import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.Emergency;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.authentication.VerifyCodeActivity;
-import com.trinreport.m.app.utils.TorLib;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -98,27 +98,27 @@ public class EmergencyTabFragment extends Fragment {
 
         // Add emergency button event listner
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
-        mEmergencyButton.setOnClickListener(new View.OnClickListener() {
+
+        mEmergencyButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
+            public boolean onLongClick(View v) {
                 try {
                     //get current location
                     //mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, looper);
                     mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
                     //send request to RDDP
-                    //notifyEmergency();
+                    notifyEmergency();
 
-                    //temporary, to be removed
                     Intent i = new Intent(getActivity(), Emergency.class);
-                    i.putExtra(Emergency.EXTRA_REPORT_ID, 100);
+                    i.putExtra(Emergency.EXTRA_REPORT_ID, 1);
                     startActivity(i);
-                    // end temporary
 
                 } catch (SecurityException e) {
                     throw e;
                 }
 
+                return false;
             }
         });
 
@@ -148,17 +148,18 @@ public class EmergencyTabFragment extends Fragment {
 
     private void notifyEmergency() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
-        String url = "http://138.197.8.83/emergency";
+        String url = "http://83a7d733.ngrok.io/emergency-request";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
+                    Log.d(TAG, "VolleySucess");
                     // get user id assigned by authentication server
-                    String key = "report_id";
+                    String key = "emergency_id";
                     JSONObject jsonObj = new JSONObject(response);
                     String report_id = jsonObj.get(key).toString();
                     Log.d(TAG, "Report ID: " + report_id);
-                    // open VerifyCodeActivity
+                    // open MergencyActivity
                     Intent i = new Intent(getActivity(), Emergency.class);
                     i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
                     startActivity(i);
@@ -169,7 +170,7 @@ public class EmergencyTabFragment extends Fragment {
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "VolleyError");
             }
         }) {
             protected Map<String, String> getParams() {
@@ -180,8 +181,16 @@ public class EmergencyTabFragment extends Fragment {
                 MyData.put("userphone", prefs.getString("userphone", ""));
                 MyData.put("userid", prefs.getString("userid", ""));
                 MyData.put("useremail", prefs.getString("useremail", ""));
-                MyData.put("longitude", String.valueOf(mLocation.getLongitude()) ); //Add the data you'd like to send to the server.
-                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) ); //Add the data you'd like to send to the server.
+                if(mLocation != null) {
+                    MyData.put("longitude", String.valueOf(mLocation.getLongitude()) ); //Add the data you'd like to send to the server.
+                    MyData.put("latitude", String.valueOf(mLocation.getLatitude()) ); //Add the data you'd like to send to the server.
+                }
+
+                else {
+                    MyData.put("longitude", String.valueOf(41.744513) ); //Add the data you'd like to send to the server.
+                    MyData.put("latitude", String.valueOf(-72.691198) );
+                }
+
                 return MyData;
             }
         };

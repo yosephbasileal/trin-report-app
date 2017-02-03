@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "645113844954",
+    "firebase_url": "https://trinreportfirebaseproject.firebaseio.com",
+    "project_id": "trinreportfirebaseproject",
+    "storage_bucket": "trinreportfirebaseproject.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645113844954:android:0f80e80b0b72993b",
+        "android_client_info": {
+          "package_name": "com.trinreport.m.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "645113844954-pem2dgk7np3meu7i0ed66dmql0cnd53b.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDNOfjxjS4m_4AWrKSunikTUG4Lzh-0CP4"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "645113844954-pem2dgk7np3meu7i0ed66dmql0cnd53b.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

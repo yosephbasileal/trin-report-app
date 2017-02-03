@@ -13,6 +13,9 @@ import com.android.volley.toolbox.Volley;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+
 import android.os.Handler;
 import android.util.Log;
 
@@ -51,6 +54,7 @@ public class EmergencyStatusService extends IntentService {
         intent.putExtra(EXTRA_LONGTIUDE, lngt);
         intent.putExtra(EXTRA_LATITUDE, lat);
         context.startService(intent);
+        Log.d(TAG, "Status service started");
     }
 
     @Override
@@ -63,11 +67,22 @@ public class EmergencyStatusService extends IntentService {
                 final double lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0);
 
                 // run request every five seconds
-                new Handler().postDelayed(new Runnable() {
+                /*new Handler().postDelayed(new Runnable() {
                     public void run() {
                         getEmergencyStatus(report_id, lngt, lat);
                     }
-                }, 10000);
+                }, 10000);*/
+
+                int delay = 0; // delay for 0 sec.
+                int period = 5000; // repeat every 10 sec.
+                Timer timer = new Timer();
+                timer.scheduleAtFixedRate(new TimerTask()
+                {
+                    public void run()
+                    {
+                        getEmergencyStatus(report_id, lngt, lat);
+                    }
+                }, delay, period);
             }
         }
     }
@@ -77,8 +92,9 @@ public class EmergencyStatusService extends IntentService {
      * parameters.
      */
     private void getEmergencyStatus(final String reportId, final double lngt, final double lat) {
+        Log.d(TAG, "getEmergencyStatus called");
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://138.197.8.83/check-status";
+        String url = "http://83a7d733.ngrok.io/check-emergency-status";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -101,7 +117,7 @@ public class EmergencyStatusService extends IntentService {
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap();
-                MyData.put("report_iD", reportId);
+                MyData.put("emergency_id", reportId);
                 MyData.put("longitude", String.valueOf(lngt));
                 MyData.put("latitude", String.valueOf(lat));
                 return MyData;
