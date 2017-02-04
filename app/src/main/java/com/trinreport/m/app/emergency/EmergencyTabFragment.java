@@ -2,11 +2,9 @@ package com.trinreport.m.app.emergency;
 
 
 import android.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -22,6 +20,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
 
 
@@ -45,10 +44,11 @@ public class EmergencyTabFragment extends Fragment {
     private static final String TAG = "EmergencyTabFragment";
 
     private Location mLocation;
-    private LocationManager mLocationManager;
 
     private Handler mHandler;
     private Runnable mLongPressed;
+
+    private GPSTracker mGpsTracker;
 
     NetSocket netSocket;
     NetLayer netLayer;
@@ -74,10 +74,14 @@ public class EmergencyTabFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
-        mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        // initialize gps tracker
+        mGpsTracker = new GPSTracker(getActivity());
+        if(!mGpsTracker.canGetLocation()) {
+            mGpsTracker.showSettingsAlert();
+        }
 
         // Add emergency button event listner
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
@@ -87,15 +91,10 @@ public class EmergencyTabFragment extends Fragment {
             public boolean onLongClick(View v) {
                 try {
                     //get current location
-                    //mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, looper);
-                    mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    mLocation = mGpsTracker.getLocation();
 
                     //send request to RDDP
                     notifyEmergency();
-
-                    Intent i = new Intent(getActivity(), Emergency.class);
-                    i.putExtra(Emergency.EXTRA_REPORT_ID, 1);
-                    startActivity(i);
 
                 } catch (SecurityException e) {
                     throw e;
@@ -104,27 +103,6 @@ public class EmergencyTabFragment extends Fragment {
                 return false;
             }
         });
-
-/*        mHandler = new Handler();
-        mLongPressed = new Runnable() {
-            public void run() {
-                Log.d("TAG", "long press emergencybuttun\n\n\n\n\n\n\n!");
-            }
-        };
-        mEmergencyButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                    mHandler.postDelayed(mLongPressed, 3000);
-                    //v.getBackground().setColorFilter(0xe0f47521, PorterDuff.Mode.SRC_ATOP);
-                    //v.invalidate();
-                }if((event.getAction() == MotionEvent.ACTION_MOVE)||(event.getAction() == MotionEvent.ACTION_UP))
-                    mHandler.removeCallbacks(mLongPressed);
-                    //v.getBackground().clearColorFilter();
-                    //v.invalidate();
-                return true;
-            }
-        });*/
 
         return v;
     }
@@ -136,13 +114,12 @@ public class EmergencyTabFragment extends Fragment {
             @Override
             public void onResponse(String response) {
                 try {
-                    Log.d(TAG, "VolleySucess");
                     // get user id assigned by authentication server
                     String key = "emergency_id";
                     JSONObject jsonObj = new JSONObject(response);
                     String report_id = jsonObj.get(key).toString();
-                    Log.d(TAG, "Report ID: " + report_id);
-                    // open MergencyActivity
+                    Log.d(TAG, "Emergency report created ID: " + report_id);
+                    // open EmergencyActivity
                     Intent i = new Intent(getActivity(), Emergency.class);
                     i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
                     startActivity(i);
@@ -164,15 +141,8 @@ public class EmergencyTabFragment extends Fragment {
                 MyData.put("userphone", prefs.getString("userphone", ""));
                 MyData.put("userid", prefs.getString("userid", ""));
                 MyData.put("useremail", prefs.getString("useremail", ""));
-                if(mLocation != null) {
-                    MyData.put("longitude", String.valueOf(mLocation.getLongitude()) ); //Add the data you'd like to send to the server.
-                    MyData.put("latitude", String.valueOf(mLocation.getLatitude()) ); //Add the data you'd like to send to the server.
-                }
-
-                else {
-                    MyData.put("longitude", String.valueOf(41.744513) ); //Add the data you'd like to send to the server.
-                    MyData.put("latitude", String.valueOf(-72.691198) );
-                }
+                MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
+                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
 
                 return MyData;
             }

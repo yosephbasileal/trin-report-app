@@ -22,9 +22,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Save context in singletonclass
+        ApplicationContext.getInstance().init(getApplicationContext());
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
-        toolbar.setTitle("TrinReport");
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(null);
 
         fm = getFragmentManager();
 

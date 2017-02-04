@@ -10,12 +10,15 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ApplicationContext;
+import com.trinreport.m.app.GPSTracker;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
 
+import android.location.Location;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 
 import org.json.JSONException;
@@ -33,64 +36,50 @@ public class EmergencyStatusService extends IntentService {
 
     private static final String ACTION_STATUS = "com.trinreport.m.app.action.check_status";
     private static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORTID";
-    private static final String EXTRA_LONGTIUDE = "com.trinreport.m.app.extra.LONGTIUDE";
-    private static final String EXTRA_LATITUDE = "com.trinreport.m.app.extra.LATITUDE";
+
+    private GPSTracker mGpsTracker;
+    private Location mLocation;
+    private String mReportId;
 
     public EmergencyStatusService() {
         super("EmergencyStatusService");
+        mGpsTracker = new GPSTracker(ApplicationContext.get());
     }
 
-    /**
-     * Starts this service to request updated status from RDDP. If
-     * the service is already performing a task this action will be queued.
-     *
-     * @see IntentService
-     */
-    public static void startActionUpdateStatus(Context context, String report_id, double lngt, double lat) {
+
+    public static void startActionUpdateStatus(Context context, String report_id) {
         Intent intent = new Intent(context, EmergencyStatusService.class);
         intent.setAction(ACTION_STATUS);
         intent.putExtra(EXTRA_REPORT_ID, report_id);
-        intent.putExtra(EXTRA_LONGTIUDE, lngt);
-        intent.putExtra(EXTRA_LATITUDE, lat);
         context.startService(intent);
         Log.d(TAG, "Status service started");
     }
+
 
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
             final String action = intent.getAction();
             if (ACTION_STATUS.equals(action)) {
-                final String report_id = intent.getStringExtra(EXTRA_REPORT_ID);
-                final double lngt = intent.getDoubleExtra(EXTRA_LONGTIUDE, 0);
-                final double lat = intent.getDoubleExtra(EXTRA_LATITUDE, 0);
+                mReportId = intent.getStringExtra(EXTRA_REPORT_ID);
 
                 // run request every five seconds
-                /*new Handler().postDelayed(new Runnable() {
+                HandlerThread handlerThread = new HandlerThread("HandlerThread");
+                handlerThread.start();
+                final Handler mHandler = new Handler(handlerThread.getLooper());
+                mHandler.post(new Runnable() {
                     public void run() {
-                        getEmergencyStatus(report_id, lngt, lat);
+                        mLocation = mGpsTracker.getLocation();
+                        getEmergencyStatus();
+                        mHandler.postDelayed(this, 5000);
                     }
-                }, 10000);*/
-
-                int delay = 0; // delay for 0 sec.
-                int period = 5000; // repeat every 10 sec.
-                Timer timer = new Timer();
-                timer.scheduleAtFixedRate(new TimerTask()
-                {
-                    public void run()
-                    {
-                        getEmergencyStatus(report_id, lngt, lat);
-                    }
-                }, delay, period);
+                });
             }
         }
     }
 
-    /**
-     * Handle action Foo in the provided background thread with the provided
-     * parameters.
-     */
-    private void getEmergencyStatus(final String reportId, final double lngt, final double lat) {
+
+    private void getEmergencyStatus() {
         Log.d(TAG, "getEmergencyStatus called");
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
         String url = "http://83a7d733.ngrok.io/check-emergency-status";
@@ -99,11 +88,11 @@ public class EmergencyStatusService extends IntentService {
             public void onResponse(String response) {
                 try {
                     // get status
-                    String key = "status";
+                    String key = "handled_status";
                     JSONObject jsonObj = new JSONObject(response);
-                    String status = jsonObj.get(key).toString();
-                    Log.d(TAG, "Status: " + status);
-                    announceStatusChange(status);
+                    Boolean received = (Boolean) jsonObj.get(key);
+                    Log.d(TAG, "STATUS... Received: " + received);
+                    announceStatusChange(received);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
                 }
@@ -116,9 +105,9 @@ public class EmergencyStatusService extends IntentService {
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap();
-                MyData.put("emergency_id", reportId);
-                MyData.put("longitude", String.valueOf(lngt));
-                MyData.put("latitude", String.valueOf(lat));
+                MyData.put("emergency_id", mReportId);
+                MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
+                MyData.put("latitude", String.valueOf(mLocation.getLatitude()));
                 return MyData;
             }
         };
@@ -126,10 +115,10 @@ public class EmergencyStatusService extends IntentService {
         MyRequestQueue.add(MyStringRequest);
     }
 
-    private void announceStatusChange(String status)//this method sends broadcast messages
+    private void announceStatusChange(Boolean receieved)//this method sends broadcast messages
     {
         Intent intent = new Intent(Emergency.EMERGENCY_STATUS_FILTER);
-        intent.putExtra(Emergency.EMERGENCY_STATUS, status);
+        intent.putExtra(Emergency.EMERGENCY_STATUS, receieved);
 
         sendBroadcast(intent);
     }
