@@ -26,9 +26,6 @@ import com.trinreport.m.app.R;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.silvertunnel_ng.netlib.api.NetLayer;
-import org.silvertunnel_ng.netlib.api.NetSocket;
-import org.silvertunnel_ng.netlib.api.util.TcpipNetAddress;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,10 +46,6 @@ public class EmergencyTabFragment extends Fragment {
     private Runnable mLongPressed;
 
     private GPSTracker mGpsTracker;
-
-    NetSocket netSocket;
-    NetLayer netLayer;
-    TcpipNetAddress remoteAddress;
 
     private Button mEmergencyButton;
 

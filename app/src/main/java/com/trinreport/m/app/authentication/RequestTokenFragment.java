@@ -112,13 +112,15 @@ public class RequestTokenFragment extends Fragment {
                     // get user id assigned by authentication server
                     String key = "auth_user_id";
                     JSONObject jsonObj = new JSONObject(response);
-                    String auth_u_id = jsonObj.get(key).toString();
-                    Log.d(TAG, "User ID: " + auth_u_id);
+                    String auth_user_id = jsonObj.get(key).toString();
+                    Log.d(TAG, "User ID: " + auth_user_id);
+
                     // save user id to shared prefs
                     SharedPreferences sf = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     SharedPreferences.Editor editor = sf.edit();
-                    editor.putString(key, auth_u_id);
+                    editor.putString(key, auth_user_id);
                     editor.commit();
+
                     // open VerifyCodeActivity
                     Intent i = new Intent(getActivity(), VerifyCodeActivity.class);
                     startActivity(i);
