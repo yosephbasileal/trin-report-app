@@ -1,4 +1,4 @@
-package com.trinreport.m.app.mainTabs;
+package com.trinreport.m.app;
 
 
 import android.os.Bundle;
@@ -6,8 +6,6 @@ import android.app.Fragment;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-
-import com.trinreport.m.app.R;
 
 /**
  * A simple {@link Fragment} subclass.

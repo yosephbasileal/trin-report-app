@@ -1,4 +1,4 @@
-package com.trinreport.m.app.mainTabs;
+package com.trinreport.m.app.report;
 
 
 import android.content.Intent;
@@ -9,7 +9,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.trinreport.m.app.AddReportActivity;
 import com.trinreport.m.app.R;
 
 

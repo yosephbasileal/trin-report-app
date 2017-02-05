@@ -1,4 +1,4 @@
-package com.trinreport.m.app.addReport;
+package com.trinreport.m.app.report;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -22,7 +22,7 @@ import java.util.GregorianCalendar;
  */
 public class DatePickerFragment extends DialogFragment {
 
-    public static final String EXTRA_DATE = "com.trinreport.m.app.addReport.date";
+    public static final String EXTRA_DATE = "com.trinreport.m.app.report.date";
     private static final String ARG_DATE = "date";
 
     private DatePicker mDatePicker;

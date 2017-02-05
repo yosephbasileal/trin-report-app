@@ -1,24 +1,18 @@
-package com.trinreport.m.app.mainTabs;
+package com.trinreport.m.app.emergency;
 
 
 import android.app.Fragment;
-import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.PorterDuff;
 import android.location.Location;
-import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -26,28 +20,16 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.trinreport.m.app.Emergency;
+import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.authentication.VerifyCodeActivity;
-import com.trinreport.m.app.utils.TorLib;
+
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.silvertunnel_ng.netlib.adapter.java.JvmGlobalUtil;
-import org.silvertunnel_ng.netlib.api.NetFactory;
 import org.silvertunnel_ng.netlib.api.NetLayer;
-import org.silvertunnel_ng.netlib.api.NetLayerIDs;
 import org.silvertunnel_ng.netlib.api.NetSocket;
 import org.silvertunnel_ng.netlib.api.util.TcpipNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorHiddenServicePortPrivateNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorHiddenServicePrivateNetAddress;
-import org.silvertunnel_ng.netlib.layer.tor.TorNetLayerUtil;
-import org.silvertunnel_ng.netlib.util.ByteArrayUtil;
-import org.silvertunnel_ng.netlib.util.HttpUtil;
 
-import java.io.File;
-import java.io.IOError;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -62,10 +44,11 @@ public class EmergencyTabFragment extends Fragment {
     private static final String TAG = "EmergencyTabFragment";
 
     private Location mLocation;
-    private LocationManager mLocationManager;
 
     private Handler mHandler;
     private Runnable mLongPressed;
+
+    private GPSTracker mGpsTracker;
 
     NetSocket netSocket;
     NetLayer netLayer;
@@ -91,74 +74,52 @@ public class EmergencyTabFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
+        // inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
-        mLocationManager = (LocationManager) getActivity().getSystemService(Context.LOCATION_SERVICE);
+        // initialize gps tracker
+        mGpsTracker = new GPSTracker(getActivity());
+        if(!mGpsTracker.canGetLocation()) {
+            mGpsTracker.showSettingsAlert();
+        }
 
         // Add emergency button event listner
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
-        mEmergencyButton.setOnClickListener(new View.OnClickListener() {
+
+        mEmergencyButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
-            public void onClick(View v) {
+            public boolean onLongClick(View v) {
                 try {
                     //get current location
-                    //mLocationManager.requestSingleUpdate(LocationManager.GPS_PROVIDER, locationListener, looper);
-                    mLocation = mLocationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                    mLocation = mGpsTracker.getLocation();
 
                     //send request to RDDP
-                    //notifyEmergency();
-
-                    //temporary, to be removed
-                    Intent i = new Intent(getActivity(), Emergency.class);
-                    i.putExtra(Emergency.EXTRA_REPORT_ID, 100);
-                    startActivity(i);
-                    // end temporary
+                    notifyEmergency();
 
                 } catch (SecurityException e) {
                     throw e;
                 }
 
+                return false;
             }
         });
-
-/*        mHandler = new Handler();
-        mLongPressed = new Runnable() {
-            public void run() {
-                Log.d("TAG", "long press emergencybuttun\n\n\n\n\n\n\n!");
-            }
-        };
-        mEmergencyButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if(event.getAction() == MotionEvent.ACTION_DOWN) {
-                    mHandler.postDelayed(mLongPressed, 3000);
-                    //v.getBackground().setColorFilter(0xe0f47521, PorterDuff.Mode.SRC_ATOP);
-                    //v.invalidate();
-                }if((event.getAction() == MotionEvent.ACTION_MOVE)||(event.getAction() == MotionEvent.ACTION_UP))
-                    mHandler.removeCallbacks(mLongPressed);
-                    //v.getBackground().clearColorFilter();
-                    //v.invalidate();
-                return true;
-            }
-        });*/
 
         return v;
     }
 
     private void notifyEmergency() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
-        String url = "http://138.197.8.83/emergency";
+        String url = "http://83a7d733.ngrok.io/emergency-request";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 try {
                     // get user id assigned by authentication server
-                    String key = "report_id";
+                    String key = "emergency_id";
                     JSONObject jsonObj = new JSONObject(response);
                     String report_id = jsonObj.get(key).toString();
-                    Log.d(TAG, "Report ID: " + report_id);
-                    // open VerifyCodeActivity
+                    Log.d(TAG, "Emergency report created ID: " + report_id);
+                    // open EmergencyActivity
                     Intent i = new Intent(getActivity(), Emergency.class);
                     i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
                     startActivity(i);
@@ -169,7 +130,7 @@ public class EmergencyTabFragment extends Fragment {
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "VolleyError");
             }
         }) {
             protected Map<String, String> getParams() {
@@ -180,8 +141,9 @@ public class EmergencyTabFragment extends Fragment {
                 MyData.put("userphone", prefs.getString("userphone", ""));
                 MyData.put("userid", prefs.getString("userid", ""));
                 MyData.put("useremail", prefs.getString("useremail", ""));
-                MyData.put("longitude", String.valueOf(mLocation.getLongitude()) ); //Add the data you'd like to send to the server.
-                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) ); //Add the data you'd like to send to the server.
+                MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
+                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+
                 return MyData;
             }
         };

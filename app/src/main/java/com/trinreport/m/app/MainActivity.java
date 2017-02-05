@@ -9,10 +9,8 @@ import android.support.v7.widget.Toolbar;
 
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
-import com.trinreport.m.app.mainTabs.EmergencyTabFragment;
-import com.trinreport.m.app.mainTabs.HistoryTab;
-import com.trinreport.m.app.mainTabs.ReportTabFragment;
-import com.trinreport.m.app.mainTabs.SettingsTabFragment;
+import com.trinreport.m.app.emergency.EmergencyTabFragment;
+import com.trinreport.m.app.report.ReportTabFragment;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,9 +22,12 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Save context in singletonclass
+        ApplicationContext.getInstance().init(getApplicationContext());
+
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
-        toolbar.setTitle("TrinReport");
         setSupportActionBar(toolbar);
+        getSupportActionBar().setTitle(null);
 
         fm = getFragmentManager();
 

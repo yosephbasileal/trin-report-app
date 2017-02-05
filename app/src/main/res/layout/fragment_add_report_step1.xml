@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.trinreport.m.app.addReport.AddReportStep1"
+    tools:context="com.trinreport.m.app.report.AddReportStep1"
     android:orientation="vertical"
     android:paddingTop="4dp"
     android:paddingBottom="16dp"

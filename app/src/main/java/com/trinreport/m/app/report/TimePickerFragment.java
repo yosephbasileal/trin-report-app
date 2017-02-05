@@ -1,4 +1,4 @@
-package com.trinreport.m.app.addReport;
+package com.trinreport.m.app.report;
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -22,7 +22,7 @@ import java.util.GregorianCalendar;
  */
 public class TimePickerFragment extends DialogFragment {
 
-    public static final String EXTRA_TIME = "com.trinreport.m.app.addReport.time";
+    public static final String EXTRA_TIME = "com.trinreport.m.app.report.time";
 
     private static final String ARG_TIME = "time";
 
