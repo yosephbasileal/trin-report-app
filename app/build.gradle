@@ -10,7 +10,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
-        multiDexEnabled true
+        /*multiDexEnabled true*/
     }
     buildTypes {
         release {
@@ -19,9 +19,9 @@ android {
         }
     }
 
-    dexOptions {
+/*    dexOptions {
         javaMaxHeapSize "4g"
-    }
+    }*/
 }
 
 dependencies {
@@ -34,6 +34,7 @@ dependencies {
     compile 'com.google.firebase:firebase-messaging:10.0.1'
     testCompile 'junit:junit:4.12'
     compile 'com.nimbusds:nimbus-jose-jwt:4.34.1'
+    compile 'net.minidev:minidev-parent:2.2'
 }
 
 configurations.compile {

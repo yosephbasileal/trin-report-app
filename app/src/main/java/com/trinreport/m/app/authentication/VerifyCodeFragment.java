@@ -19,7 +19,10 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.util.Base64URL;
 import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
@@ -31,10 +34,10 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
-import com.nimbusds.jose.jwk.RSAKey;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -118,21 +121,19 @@ public class VerifyCodeFragment extends Fragment {
                     editor.putBoolean("authenticated", true);
 
                     // generate RSA keys
-                    KeyPair keyPair = RSA.generateRSAKeys();
+                    KeyPair keyPair = RSA.generateRsaKeyPair(2048);
                     RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
                     RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
-                    // save private key and public key in shared prefs
-                    RSAKey keyPairJwk = new RSAKey.Builder(publicKey)
-                            .privateKey(privateKey)
-                            .build();
-                    String keyPairJsonString = keyPairJwk.toString();
-                    editor.putString("key_pair", keyPairJsonString);
+                    // save private key pem in shared prefs
+                    String privateKeyPem = RSA.createStringFromPublicKey(keyPair.getPrivate());
+                    editor.putString("private_key", privateKeyPem);
+                    Log.d(TAG, "Saved private key locally");
 
-                    // publish public key to server
-                    RSAKey publicKeyJwk = new RSAKey.Builder(publicKey)
-                            .build();
-                    publishRSAPublicKey(auth_token, publicKeyJwk);
+                    // publish public key pem to server
+                    String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
+                    publishRSAPublicKey(auth_token, publicKeyPem);
+                    Log.d(TAG, "Sent public key to server");
 
                     // save shared prefs
                     editor.commit();
@@ -140,11 +141,8 @@ public class VerifyCodeFragment extends Fragment {
                     // open MainActivity
                     Intent i = new Intent(getActivity(), MainActivity.class);
                     startActivity(i);
-                } catch (JSONException e) {
-                    Log.d(TAG, "JSONException: " + e.toString());
-                    verifCodeText.setError("Authentication failed! Enter a valid code.");
-                } catch (NoSuchAlgorithmException e) {
-
+                } catch (Exception e) {
+                    Log.d(TAG, "Exception: " + e.toString());
                 }
 
             }
@@ -166,24 +164,43 @@ public class VerifyCodeFragment extends Fragment {
         requestQueue.add(stringRequest);
     }
 
-    private void publishRSAPublicKey(final String auth_token, final RSAKey publicKey) {
-        String url = "http://56e83ff5.ngrok.io/api/app/publish-user-public-key";
-        HashMap<String, RSAKey> myData = new HashMap<String, RSAKey>();
-        myData.put(auth_token, publicKey);
-
-        RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
-        JsonObjectRequest req = new JsonObjectRequest(url, new JSONObject(myData), new Response.Listener<JSONObject>() {
+    private void publishRSAPublicKey(final String auth_token, final String publicKey) {
+        RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
+        String url = "http://a0bba784.ngrok.io/api/app/publish-user-public-key";
+        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
-            public void onResponse(JSONObject response) {
+            public void onResponse(String response) {
+                Log.d(TAG, "Volley Response: " + response);
+                try {
+                    // get public key of admin
+                    String key = "public_key";
+                    JSONObject jsonObj = new JSONObject(response);
+                    String publicKeyPem = jsonObj.get(key).toString();
 
+                    // save admin public key shared prefs
+                    SharedPreferences.Editor editor = mSharedPref.edit();
+                    editor.putString("admin_public_key", publicKeyPem);
+                    Log.d(TAG, "Key pem: " + publicKeyPem);
+                    editor.commit();
+
+                } catch (JSONException e) {
+                    Log.d(TAG, e.getMessage());
+                }
             }
-        }, new Response.ErrorListener() {
+        }, new Response.ErrorListener() { //listener to handle errors
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                //This code is executed if there is an error.
             }
-        });
+        }) {
+            protected Map<String, String> getParams() {
+                Map<String, String> MyData = new HashMap();
+                MyData.put("public_key", publicKey);
+                MyData.put("auth_token", auth_token);
+                return MyData;
+            }
+        };
 
-        requestQueue.add(req);
+        MyRequestQueue.add(MyStringRequest);
     }
 }

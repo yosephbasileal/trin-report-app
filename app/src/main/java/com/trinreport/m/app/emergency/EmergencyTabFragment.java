@@ -14,19 +14,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.android.volley.ExecutorDelivery;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.RSAKey;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
+import com.trinreport.m.app.RSA;
 
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.security.Key;
+import java.security.PublicKey;
+import java.security.interfaces.RSAPublicKey;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -102,7 +110,7 @@ public class EmergencyTabFragment extends Fragment {
 
     private void notifyEmergency() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
-        String url = "http://83a7d733.ngrok.io/emergency-request";
+        String url = "http://a0bba784.ngrok.io/emergency-request";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -123,19 +131,36 @@ public class EmergencyTabFragment extends Fragment {
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "VolleyError");
+                Log.d(TAG, "VolleyError: " + error.getMessage());
             }
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap();
+
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                MyData.put("username", prefs.getString("username", ""));
-                MyData.put("userdorm", prefs.getString("userdorm", ""));
-                MyData.put("userphone", prefs.getString("userphone", ""));
-                MyData.put("userid", prefs.getString("userid", ""));
-                MyData.put("useremail", prefs.getString("useremail", ""));
-                MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
-                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+
+                try {
+                    String adminKeyStr = prefs.getString("admin_public_key", "");
+                    Log.d(TAG, "Key pem: " + adminKeyStr);
+                    Key publickey = RSA.createPublicKeyFromString(adminKeyStr);
+
+                    String user_name = prefs.getString("username", "");
+                    Log.d(TAG, "Name: " + user_name);
+                    String name_enc = RSA.encryptRsa(publickey, user_name);
+                    Log.d(TAG, "Name enc: " + name_enc);
+
+                    MyData.put("username", name_enc);
+                    MyData.put("userdorm", prefs.getString("userdorm", ""));
+                    MyData.put("userphone", prefs.getString("userphone", ""));
+                    MyData.put("userid", prefs.getString("userid", ""));
+                    MyData.put("useremail", prefs.getString("useremail", ""));
+                    MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
+                    MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+
+                } catch (Exception e) {
+                    Log.d(TAG, e.getMessage());
+                }
+
 
                 return MyData;
             }
