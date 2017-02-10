@@ -14,27 +14,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import com.android.volley.ExecutorDelivery;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
-import com.nimbusds.jose.JOSEException;
-import com.nimbusds.jose.jwk.RSAKey;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
 
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.security.Key;
-import java.security.PublicKey;
-import java.security.interfaces.RSAPublicKey;
-import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -140,16 +133,7 @@ public class EmergencyTabFragment extends Fragment {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
                 try {
-                    String adminKeyStr = prefs.getString("admin_public_key", "");
-                    Log.d(TAG, "Key pem: " + adminKeyStr);
-                    Key publickey = RSA.createPublicKeyFromString(adminKeyStr);
-
-                    String user_name = prefs.getString("username", "");
-                    Log.d(TAG, "Name: " + user_name);
-                    String name_enc = RSA.encryptRsa(publickey, user_name);
-                    Log.d(TAG, "Name enc: " + name_enc);
-
-                    MyData.put("username", name_enc);
+                    MyData.put("username", prefs.getString("username", ""));
                     MyData.put("userdorm", prefs.getString("userdorm", ""));
                     MyData.put("userphone", prefs.getString("userphone", ""));
                     MyData.put("userid", prefs.getString("userid", ""));

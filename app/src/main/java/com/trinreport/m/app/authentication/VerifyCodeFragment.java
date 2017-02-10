@@ -122,18 +122,14 @@ public class VerifyCodeFragment extends Fragment {
 
                     // generate RSA keys
                     KeyPair keyPair = RSA.generateRsaKeyPair(2048);
-                    RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
-                    RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
                     // save private key pem in shared prefs
-                    String privateKeyPem = RSA.createStringFromPublicKey(keyPair.getPrivate());
+                    String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
                     editor.putString("private_key", privateKeyPem);
-                    Log.d(TAG, "Saved private key locally");
 
                     // publish public key pem to server
                     String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
                     publishRSAPublicKey(auth_token, publicKeyPem);
-                    Log.d(TAG, "Sent public key to server");
 
                     // save shared prefs
                     editor.commit();
