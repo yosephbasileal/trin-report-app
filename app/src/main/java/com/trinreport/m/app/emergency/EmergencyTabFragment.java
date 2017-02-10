@@ -14,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -22,13 +23,10 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
-
+import com.trinreport.m.app.RSA;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.silvertunnel_ng.netlib.api.NetLayer;
-import org.silvertunnel_ng.netlib.api.NetSocket;
-import org.silvertunnel_ng.netlib.api.util.TcpipNetAddress;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,10 +47,6 @@ public class EmergencyTabFragment extends Fragment {
     private Runnable mLongPressed;
 
     private GPSTracker mGpsTracker;
-
-    NetSocket netSocket;
-    NetLayer netLayer;
-    TcpipNetAddress remoteAddress;
 
     private Button mEmergencyButton;
 
@@ -109,7 +103,7 @@ public class EmergencyTabFragment extends Fragment {
 
     private void notifyEmergency() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
-        String url = "http://83a7d733.ngrok.io/emergency-request";
+        String url = "http://a0bba784.ngrok.io/emergency-request";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -130,19 +124,27 @@ public class EmergencyTabFragment extends Fragment {
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override
             public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "VolleyError");
+                Log.d(TAG, "VolleyError: " + error.getMessage());
             }
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap();
+
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                MyData.put("username", prefs.getString("username", ""));
-                MyData.put("userdorm", prefs.getString("userdorm", ""));
-                MyData.put("userphone", prefs.getString("userphone", ""));
-                MyData.put("userid", prefs.getString("userid", ""));
-                MyData.put("useremail", prefs.getString("useremail", ""));
-                MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
-                MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+
+                try {
+                    MyData.put("username", prefs.getString("username", ""));
+                    MyData.put("userdorm", prefs.getString("userdorm", ""));
+                    MyData.put("userphone", prefs.getString("userphone", ""));
+                    MyData.put("userid", prefs.getString("userid", ""));
+                    MyData.put("useremail", prefs.getString("useremail", ""));
+                    MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
+                    MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+
+                } catch (Exception e) {
+                    Log.d(TAG, e.getMessage());
+                }
+
 
                 return MyData;
             }

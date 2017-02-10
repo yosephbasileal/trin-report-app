@@ -183,7 +183,7 @@ public class Emergency extends AppCompatActivity {
 
     private void sendExplanation() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://83a7d733.ngrok.io/emergency-explanation";
+        String url = "http://a0bba784.ngrok.io/emergency-explanation";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
@@ -208,7 +208,7 @@ public class Emergency extends AppCompatActivity {
 
     private void updateCallmeCheckbox() {
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://83a7d733.ngrok.io/emergency-callme-checkbox";
+        String url = "http://a0bba784.ngrok.io/emergency-callme-checkbox";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {

@@ -82,7 +82,7 @@ public class EmergencyStatusService extends IntentService {
     private void getEmergencyStatus() {
         Log.d(TAG, "getEmergencyStatus called");
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://83a7d733.ngrok.io/check-emergency-status";
+        String url = "http://a0bba784.ngrok.io/check-emergency-status";
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
