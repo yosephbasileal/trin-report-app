@@ -12,7 +12,8 @@ import android.preference.PreferenceManager;
  * Use the {@link SettingsTabFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SettingsTabFragment extends PreferenceFragment implements Preference.OnPreferenceChangeListener {
+public class SettingsTabFragment extends PreferenceFragment
+        implements Preference.OnPreferenceChangeListener {
 
     /**
      * Factory method to create a new instance of

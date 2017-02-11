@@ -17,8 +17,10 @@ import javax.crypto.spec.OAEPParameterSpec;
 import javax.crypto.spec.PSource;
 
 
-// Source: https://vshivam.wordpress.com/2015/06/09/android-javascript-and-python-compatible-rsa-encryption/
-
+/**
+ * Wrapper methods for generating keys, encrypting, decryting
+ * Source: https://vshivam.wordpress.com/2015/06/09/android-javascript-and-python-compatible-rsa-encryption/
+ */
 public class RSA {
 
     // constants

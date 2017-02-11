@@ -2,11 +2,16 @@ package com.trinreport.m.app;
 
 import android.content.Context;
 
+/**
+ * Singleton class for getting application context
+ */
 public class ApplicationContext {
 
     private Context appContext;
 
-    private ApplicationContext(){}
+    private ApplicationContext(){
+
+    }
 
     public void init(Context context){
         if(appContext == null){

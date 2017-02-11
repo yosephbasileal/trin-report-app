@@ -29,7 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * In this page, user enters the verif code they they recieved through email
+ * In this page, user enters the verif code they they
+ * recieved through email
  */
 public class VerifyCodeActivity extends AppCompatActivity {
 
@@ -101,7 +102,8 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);

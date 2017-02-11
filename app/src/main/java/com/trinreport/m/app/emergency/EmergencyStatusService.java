@@ -12,6 +12,7 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.GPSTracker;
+import com.trinreport.m.app.URL;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -25,28 +26,24 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
- * An {@link IntentService} subclass for handling asynchronous task requests in
- * a service on a separate handler thread.
- * <p>
- * TODO: Customize class - update intent actions, extra parameters and static
- * helper methods.
+ * Service for handling asynchronous requests to rddp server
+ * to request updated status and send updated gps points
  */
 public class EmergencyStatusService extends IntentService {
-    private static final String TAG = "EmergencyStatusService";
 
+    // constants
+    private static final String TAG = "EmergencyStatusService";
     private static final String ACTION_STATUS = "com.trinreport.m.app.action.check_status";
     private static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORTID";
 
+    // variables
     private GPSTracker mGpsTracker;
     private Location mLocation;
     private String mReportId;
 
-    public EmergencyStatusService() {
-        super("EmergencyStatusService");
-        mGpsTracker = new GPSTracker(ApplicationContext.get());
-    }
-
-
+    /**
+     * Factory method to start this service
+     */
     public static void startActionUpdateStatus(Context context, String report_id) {
         Intent intent = new Intent(context, EmergencyStatusService.class);
         intent.setAction(ACTION_STATUS);
@@ -55,6 +52,10 @@ public class EmergencyStatusService extends IntentService {
         Log.d(TAG, "Status service started");
     }
 
+    public EmergencyStatusService() {
+        super("EmergencyStatusService");
+        mGpsTracker = new GPSTracker(ApplicationContext.get());
+    }
 
     @Override
     protected void onHandleIntent(Intent intent) {
@@ -78,29 +79,41 @@ public class EmergencyStatusService extends IntentService {
         }
     }
 
+    /**
+     * This method broadcasts updated status
+     */
+    private void announceStatusChange(Boolean receieved) {
+        Intent intent = new Intent(Emergency.EMERGENCY_STATUS_FILTER);
+        intent.putExtra(Emergency.EMERGENCY_STATUS, receieved);
+
+        sendBroadcast(intent);
+    }
+
 
     private void getEmergencyStatus() {
-        Log.d(TAG, "getEmergencyStatus called");
-        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://a0bba784.ngrok.io/check-emergency-status";
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        // get url
+        String url = URL.CHECK_EMERGENCY_STATUS;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                Log.d(TAG, "Volley Sucess: " + response);
                 try {
-                    // get status
-                    String key = "handled_status";
+                    // get status and send broadcast intent
                     JSONObject jsonObj = new JSONObject(response);
-                    Boolean received = (Boolean) jsonObj.get(key);
-                    Log.d(TAG, "STATUS... Received: " + received);
+                    Boolean received = (Boolean) jsonObj.get("handled_status");
                     announceStatusChange(received);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
                 }
             }
-        }, new Response.ErrorListener() { //listener to handle errors
+        }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "VolleyError: " + error.getMessage());
             }
         }) {
             protected Map<String, String> getParams() {
@@ -112,14 +125,7 @@ public class EmergencyStatusService extends IntentService {
             }
         };
 
-        MyRequestQueue.add(MyStringRequest);
-    }
-
-    private void announceStatusChange(Boolean receieved)//this method sends broadcast messages
-    {
-        Intent intent = new Intent(Emergency.EMERGENCY_STATUS_FILTER);
-        intent.putExtra(Emergency.EMERGENCY_STATUS, receieved);
-
-        sendBroadcast(intent);
+        // add to queue
+        requestQueue.add(stringRequest);
     }
 }

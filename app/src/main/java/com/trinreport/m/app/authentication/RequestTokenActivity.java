@@ -29,8 +29,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * This page is where a user can request an authentication token by providing
- * their school provided email address
+ * This page is where a user can request an authentication
+ * token by providing their school provided email address
  */
 public class RequestTokenActivity extends AppCompatActivity {
 

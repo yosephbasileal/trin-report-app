@@ -12,7 +12,8 @@ import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
 
 /**
- * This is the very initial page an authenticated user sees after they download the app
+ * This is the very initial page an authenticated user sees
+ * after they download the app
  */
 public class StartPageActivity extends AppCompatActivity {
 
