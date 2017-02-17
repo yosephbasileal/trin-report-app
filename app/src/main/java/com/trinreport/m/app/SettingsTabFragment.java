@@ -38,8 +38,6 @@ public class SettingsTabFragment extends PreferenceFragment
 
         bindPreferenceSummaryToValue(findPreference("username"));
         bindPreferenceSummaryToValue(findPreference("userphone"));
-        bindPreferenceSummaryToValue(findPreference("useremail"));
-        bindPreferenceSummaryToValue(findPreference("userdorm"));
         bindPreferenceSummaryToValue(findPreference("userid"));
 
     }

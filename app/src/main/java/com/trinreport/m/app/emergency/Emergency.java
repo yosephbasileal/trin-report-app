@@ -4,8 +4,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -19,6 +21,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -27,6 +30,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.R;
+import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
 
 import java.util.HashMap;
@@ -56,6 +60,8 @@ public class Emergency extends AppCompatActivity {
 
     // other references
     BroadcastReceiver broadcastReceiver;
+    private String mAdminPublicKey;
+    private SharedPreferences mSharedPrefs;
 
     // variables
     private String mExplanation;
@@ -69,6 +75,9 @@ public class Emergency extends AppCompatActivity {
 
         // inflate layout
         setContentView(R.layout.activity_emergency);
+
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
 
         // get references
         mToolbar = (Toolbar) findViewById(R.id.toolbar_emergency);
@@ -160,11 +169,31 @@ public class Emergency extends AppCompatActivity {
     }
 
     @Override
+    protected  void onResume() {
+        super.onResume();
+        Log.d(TAG, "Emergency activity resumed");
+        registerBroadcastReceiver();
+    }
+
+    @Override
     protected  void onStop() {
-        super.onStop();
         Log.d(TAG, "Emergency activity stopped");
         // stop emergency status service
+        unregisterReceiver(broadcastReceiver);
         stopService(new Intent(this, EmergencyStatusService.class));
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "Emergency activity destroyed");
+        try {
+            if(broadcastReceiver != null)
+                unregisterReceiver(broadcastReceiver);
+        } catch(Exception e) {
+
+        }
+        super.onDestroy();
     }
 
     /**
@@ -196,6 +225,10 @@ public class Emergency extends AppCompatActivity {
         }
     }
 
+    private String encrypt(String plain) throws Exception {
+        return RSA.encrypt(plain, mAdminPublicKey);
+    }
+
     private void sendExplanation() {
         // get url
         String url = URL.SEND_EMERGENCY_EXPLANATION;
@@ -205,18 +238,32 @@ public class Emergency extends AppCompatActivity {
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-
+                Log.d(TAG, "Volley Sucess: " + response);
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap<>();
+
+                String explanation = mExplanation;
+
+                // encrypt data
+                try {
+                    explanation = encrypt(explanation);
+
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+
+
                 MyData.put("emergency_id", mReportId);
-                MyData.put("explanation", mExplanation);
+                MyData.put("explanation", explanation);
                 return MyData;
             }
         };
@@ -240,6 +287,8 @@ public class Emergency extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
