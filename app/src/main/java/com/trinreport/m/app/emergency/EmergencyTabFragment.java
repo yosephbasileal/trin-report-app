@@ -6,13 +6,13 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.Toast;
 
 
 import com.android.volley.Request;
@@ -24,6 +24,7 @@ import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
+import com.trinreport.m.app.URL;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -33,28 +34,24 @@ import java.util.Map;
 
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link EmergencyTabFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * This is fragment for tab with emergency button
  */
 public class EmergencyTabFragment extends Fragment {
 
+    // constants
     private static final String TAG = "EmergencyTabFragment";
 
-    private Location mLocation;
-
-    private Handler mHandler;
-    private Runnable mLongPressed;
-
-    private GPSTracker mGpsTracker;
-
+    // layout references
     private Button mEmergencyButton;
 
+    // other refernces
+    private Location mLocation;
+    private GPSTracker mGpsTracker;
+    private SharedPreferences mSharedPrefs;
+    private String mAdminPublicKey;
+
     /**
-     * Factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment EmergencyTabFragment.
+     * Factory method to create a new instance of this fragment
      */
     public static EmergencyTabFragment newInstance() {
         EmergencyTabFragment fragment = new EmergencyTabFragment();
@@ -62,7 +59,7 @@ public class EmergencyTabFragment extends Fragment {
     }
 
     public EmergencyTabFragment() {
-        // empty
+        // empty constructor
     }
 
     @Override
@@ -71,15 +68,17 @@ public class EmergencyTabFragment extends Fragment {
         // inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
+        mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
+
         // initialize gps tracker
         mGpsTracker = new GPSTracker(getActivity());
         if(!mGpsTracker.canGetLocation()) {
             mGpsTracker.showSettingsAlert();
         }
 
-        // Add emergency button event listner
-        mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
-
+        // add emergency button event lisetner
         mEmergencyButton.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
@@ -101,55 +100,85 @@ public class EmergencyTabFragment extends Fragment {
         return v;
     }
 
+    private void startEmergencyActivity(String report_id) {
+        Intent i = new Intent(getActivity(), Emergency.class);
+        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
+        startActivity(i);
+    }
+
+    private String encrypt(String plain) throws Exception {
+        return RSA.encrypt(plain, mAdminPublicKey);
+    }
+
     private void notifyEmergency() {
-        RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
-        String url = "http://a0bba784.ngrok.io/emergency-request";
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        // get url
+        String url = URL.SEND_EMERGENCY_REQUEST;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this.getActivity());
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
+                Log.d(TAG, "Volley Sucess: " + response);
                 try {
                     // get user id assigned by authentication server
-                    String key = "emergency_id";
                     JSONObject jsonObj = new JSONObject(response);
-                    String report_id = jsonObj.get(key).toString();
-                    Log.d(TAG, "Emergency report created ID: " + report_id);
+                    String report_id = jsonObj.get("emergency_id").toString();
+
                     // open EmergencyActivity
-                    Intent i = new Intent(getActivity(), Emergency.class);
-                    i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
-                    startActivity(i);
+                    startEmergencyActivity(report_id);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
                 }
             }
-        }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
+        }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "VolleyError: " + error.getMessage());
+                Toast.makeText(getActivity(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap();
+                Map<String, String> MyData = new HashMap<>();
 
-                SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                // get user data from shared preferences
+                String name = mSharedPrefs.getString("username", "");
+                String phone = mSharedPrefs.getString("userphone", "");
+                String userid = mSharedPrefs.getString("userid", "");
+                String longitude = String.valueOf(mLocation.getLongitude());
+                String latitude = String.valueOf(mLocation.getLatitude());
+                String explanation = "N/A"; // to be added later
 
+
+                // encrypt data
                 try {
-                    MyData.put("username", prefs.getString("username", ""));
-                    MyData.put("userdorm", prefs.getString("userdorm", ""));
-                    MyData.put("userphone", prefs.getString("userphone", ""));
-                    MyData.put("userid", prefs.getString("userid", ""));
-                    MyData.put("useremail", prefs.getString("useremail", ""));
-                    MyData.put("longitude", String.valueOf(mLocation.getLongitude()));
-                    MyData.put("latitude", String.valueOf(mLocation.getLatitude()) );
+                    name = encrypt(name);
+                    phone = encrypt(phone);
+                    userid = encrypt(userid);
+                    //longitude = encrypt(longitude);
+                    //latitude = encrypt(latitude);
+                    explanation = encrypt(explanation);
 
                 } catch (Exception e) {
-                    Log.d(TAG, e.getMessage());
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
                 }
 
+                // add data to hashmap
+                MyData.put("username", name);
+                MyData.put("userphone", phone);
+                MyData.put("userid", userid);
+                MyData.put("longitude", longitude);
+                MyData.put("latitude", latitude);
+                MyData.put("explanation", explanation);
 
                 return MyData;
             }
         };
 
-        MyRequestQueue.add(MyStringRequest);
+        // add to queue
+        requestQueue.add(stringRequest);
     }
 }

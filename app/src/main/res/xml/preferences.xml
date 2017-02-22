@@ -8,24 +8,12 @@
             android:singleLine="true"
             android:inputType="text" />
 
-        <EditTextPreference
-            android:title="Dorm"
-            android:summary="Eg. Funston 310"
-            android:key="userdorm"
-            android:singleLine="true"
-            android:inputType="text" />
 
         <EditTextPreference
             android:title="Phone Number"
             android:key="userphone"
             android:singleLine="true"
             android:inputType="phone"/>
-
-    <EditTextPreference
-        android:title="Email"
-        android:key="useremail"
-        android:singleLine="true"
-        android:inputType="textEmailAddress"/>
 
         <EditTextPreference
             android:title="Trinity ID"

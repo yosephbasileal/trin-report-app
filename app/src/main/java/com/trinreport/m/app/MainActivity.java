@@ -22,9 +22,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Save context in singletonclass
+        // save context in singleton class
         ApplicationContext.getInstance().init(getApplicationContext());
 
+        // setup toolbar
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle(null);
@@ -45,16 +46,20 @@ public class MainActivity extends AppCompatActivity {
                 public void onTabSelected(@IdRes int tabId) {
                     if (tabId == R.id.tab_emergency) {
                         setTitle("");
-                        fm.beginTransaction().replace(R.id.main_activity_container, frag_emergency).commit();
+                        fm.beginTransaction().replace(R.id.main_activity_container,
+                                frag_emergency).commit();
                     } else if (tabId == R.id.tab_report) {
                         setTitle("Incident Report");
-                        fm.beginTransaction().replace(R.id.main_activity_container, frag_report).commit();
+                        fm.beginTransaction().replace(R.id.main_activity_container,
+                                frag_report).commit();
                     } else if (tabId == R.id.tab_history) {
                         setTitle("Archive");
-                        fm.beginTransaction().replace(R.id.main_activity_container, frag_history).commit();
+                        fm.beginTransaction().replace(R.id.main_activity_container,
+                                frag_history).commit();
                     } else if (tabId == R.id.tab_settings) {
                         setTitle("Settings");
-                        fm.beginTransaction().replace(R.id.main_activity_container, frag_settings).commit();
+                        fm.beginTransaction().replace(R.id.main_activity_container,
+                                frag_settings).commit();
                     }
                 }
             });

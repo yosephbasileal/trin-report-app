@@ -4,8 +4,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.net.Uri;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -19,6 +21,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -27,20 +30,25 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.R;
+import com.trinreport.m.app.RSA;
+import com.trinreport.m.app.URL;
 
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This activity is opened when use presses the emergency button
+ */
 public class Emergency extends AppCompatActivity {
-    private static final String TAG = "EmergencyActivity";
 
+    // constants
+    private static final String TAG = "EmergencyActivity";
     public static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORT_ID";
     public static final String EMERGENCY_STATUS = "com.trinreport.m.app.extra.STATUS";
     public static final String EMERGENCY_STATUS_FILTER = "com.trinreport.m.app.action.new_status";
-
     private static final String CS_PHONE_NUMBER = "8602972222";
 
-    // view components
+    // layour references
     private Toolbar mToolbar;
     private TextView mStatusTextview;
     private LinearLayout mExplanationLayout;
@@ -50,20 +58,38 @@ public class Emergency extends AppCompatActivity {
     private CheckBox mCallmeCheckbox;
     private Button mCallCsSafetyButton;
 
+    // other references
+    BroadcastReceiver broadcastReceiver;
+    private String mAdminPublicKey;
+    private SharedPreferences mSharedPrefs;
+
+    // variables
     private String mExplanation;
     private String mReportId;
     private Boolean mReceieved = false;
     private Boolean mCanCallMe = true;
 
-    BroadcastReceiver broadcastReceiver;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // inflate layout
         setContentView(R.layout.activity_emergency);
 
-        // setup toolbar
+        mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
+
+        // get references
         mToolbar = (Toolbar) findViewById(R.id.toolbar_emergency);
+        mStatusTextview = (TextView) findViewById(R.id.statusTextView);
+        mExplanationLayout = (LinearLayout) findViewById(R.id.explanation_layout);
+        mExplanationSentTextView = (TextView) findViewById(R.id.explanation_sent_textview);
+        mExplanationEditText = (EditText) findViewById(R.id.explanation);
+        mExplanationButton = (Button) findViewById(R.id.send_explanation);
+        mCallmeCheckbox = (CheckBox) findViewById(R.id.callme_checkbox);
+        mCallCsSafetyButton = (Button) findViewById(R.id.call_csafety_button);
+
+        // setup toolbar
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
             getSupportActionBar().setTitle(null);
@@ -71,9 +97,8 @@ public class Emergency extends AppCompatActivity {
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
 
-        // get report id
+        // get report id from intent
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
-        mStatusTextview = (TextView) findViewById(R.id.statusTextView);
 
         // initialize status to not recieved
         updateStatus();
@@ -82,10 +107,7 @@ public class Emergency extends AppCompatActivity {
         registerBroadcastReceiver();
         EmergencyStatusService.startActionUpdateStatus(this, mReportId);
 
-        // text field for adding explanation about emergency situation
-        mExplanationLayout = (LinearLayout) findViewById(R.id.explanation_layout);
-        mExplanationSentTextView = (TextView) findViewById(R.id.explanation_sent_textview);
-        mExplanationEditText = (EditText) findViewById(R.id.explanation);
+        // add listener to text field for adding explanation about emergency situation
         mExplanationEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -103,8 +125,7 @@ public class Emergency extends AppCompatActivity {
             }
         });
 
-        // button click sends explanation to rddp
-        mExplanationButton = (Button) findViewById(R.id.send_explanation);
+        // button click sends explanation about the emergency to rddp server
         mExplanationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -120,8 +141,7 @@ public class Emergency extends AppCompatActivity {
             }
         });
 
-        // checkbox
-        mCallmeCheckbox = (CheckBox) findViewById(R.id.callme_checkbox);
+        // checkbox to indicate if campus safety can call
         mCallmeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -132,11 +152,12 @@ public class Emergency extends AppCompatActivity {
             }
         });
 
-        mCallCsSafetyButton = (Button) findViewById(R.id.call_csafety_button);
+        // button for calling campus safety office
         mCallCsSafetyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel: " + CS_PHONE_NUMBER));
+                Intent intent = new Intent(Intent.ACTION_CALL,
+                        Uri.parse("tel: " + CS_PHONE_NUMBER));
                 try {
                     startActivity(intent);
                 }
@@ -148,15 +169,36 @@ public class Emergency extends AppCompatActivity {
     }
 
     @Override
-    protected  void onStop() {
-        super.onStop();
-        Log.d(TAG, "Emergency activity stopped");
-
-        // stop emergency status service
-        stopService(new Intent(this, EmergencyStatusService.class));
+    protected  void onResume() {
+        super.onResume();
+        Log.d(TAG, "Emergency activity resumed");
+        registerBroadcastReceiver();
     }
 
-    // This method will register a reciever that will recieve intent from EmergencyStatusService
+    @Override
+    protected  void onStop() {
+        Log.d(TAG, "Emergency activity stopped");
+        // stop emergency status service
+        unregisterReceiver(broadcastReceiver);
+        stopService(new Intent(this, EmergencyStatusService.class));
+        super.onStop();
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "Emergency activity destroyed");
+        try {
+            if(broadcastReceiver != null)
+                unregisterReceiver(broadcastReceiver);
+        } catch(Exception e) {
+
+        }
+        super.onDestroy();
+    }
+
+    /**
+     * This method will register a reciever that will recieve intent from EmergencyStatusService
+      */
     private void registerBroadcastReceiver() {
         broadcastReceiver = new BroadcastReceiver() {
             @Override
@@ -169,7 +211,9 @@ public class Emergency extends AppCompatActivity {
         registerReceiver(broadcastReceiver, filter);
     }
 
-    // Updates status text on screen
+    /**
+     * Updates emergency status on the screen
+     */
     private void updateStatus() {
         if(!mReceieved) {
             mStatusTextview.setText("Pending");
@@ -181,53 +225,81 @@ public class Emergency extends AppCompatActivity {
         }
     }
 
+    private String encrypt(String plain) throws Exception {
+        return RSA.encrypt(plain, mAdminPublicKey);
+    }
+
     private void sendExplanation() {
-        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://a0bba784.ngrok.io/emergency-explanation";
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        // get url
+        String url = URL.SEND_EMERGENCY_EXPLANATION;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-
+                Log.d(TAG, "Volley Sucess: " + response);
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap();
+                Map<String, String> MyData = new HashMap<>();
+
+                String explanation = mExplanation;
+
+                // encrypt data
+                try {
+                    explanation = encrypt(explanation);
+
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+
+
                 MyData.put("emergency_id", mReportId);
-                MyData.put("explanation", mExplanation);
+                MyData.put("explanation", explanation);
                 return MyData;
             }
         };
 
-        MyRequestQueue.add(MyStringRequest);
+        // add to queue
+        requestQueue.add(stringRequest);
     }
 
     private void updateCallmeCheckbox() {
-        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
-        String url = "http://a0bba784.ngrok.io/emergency-callme-checkbox";
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        // get url
+        String url = URL.EMERGENCY_CALLME_CHECKBOX;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-
+                Log.d(TAG, "Volley Sucess: " + response);
             }
-        }, new Response.ErrorListener() { //listener to handle errors
+        }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap();
+                Map<String, String> MyData = new HashMap<>();
                 MyData.put("emergency_id", mReportId);
                 MyData.put("callme", mCanCallMe.toString());
                 return MyData;
             }
         };
 
-        MyRequestQueue.add(MyStringRequest);
+        // add to queue
+        requestQueue.add(stringRequest);
     }
 }
