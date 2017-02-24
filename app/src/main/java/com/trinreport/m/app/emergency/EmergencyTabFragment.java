@@ -154,7 +154,7 @@ public class EmergencyTabFragment extends Fragment {
 
 
                 // encrypt data
-                try {
+                /*try {
                     name = encrypt(name);
                     phone = encrypt(phone);
                     userid = encrypt(userid);
@@ -164,7 +164,7 @@ public class EmergencyTabFragment extends Fragment {
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
-                }
+                }*/
 
                 // add data to hashmap
                 MyData.put("username", name);

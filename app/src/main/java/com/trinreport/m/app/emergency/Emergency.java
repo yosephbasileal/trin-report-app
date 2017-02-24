@@ -254,12 +254,12 @@ public class Emergency extends AppCompatActivity {
                 String explanation = mExplanation;
 
                 // encrypt data
-                try {
+                /*try {
                     explanation = encrypt(explanation);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
-                }
+                }*/
 
 
                 MyData.put("emergency_id", mReportId);
