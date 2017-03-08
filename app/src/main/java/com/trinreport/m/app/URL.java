@@ -8,7 +8,8 @@ public class URL {
 
     // domains
     public static String AUTH_SERVER_DOMAIN = "http://trinreport.appspot.com";
-    public static String RDDP_SERVER_DOMAIN = "https://trinreport.com";
+    //public static String RDDP_SERVER_DOMAIN = "https://trinreport.com";
+    public static String RDDP_SERVER_DOMAIN = "https://bf78e962.ngrok.io";
 
     // authentication urls
     public static String REQUEST_AUTH_TOKEN = AUTH_SERVER_DOMAIN + "/request";
@@ -21,4 +22,7 @@ public class URL {
     public static String EMERGENCY_CALLME_CHECKBOX = RDDP_SERVER_DOMAIN + "/emergency-callme-checkbox";
     public static String CHECK_EMERGENCY_STATUS = RDDP_SERVER_DOMAIN + "/check-emergency-status";
 
+    // report urls
+    public static String SEND_REPORT = RDDP_SERVER_DOMAIN + "/report";
+    public static String SEND_REPORT_ANON = RDDP_SERVER_DOMAIN + "/report-anonymous";
 }

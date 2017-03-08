@@ -1,37 +1,117 @@
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:layout_marginTop="50dp">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/buttons_relative"
+        android:orientation="vertical">
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TAP TO CALL"
+            android:textSize="14pt"
+            android:gravity="center"
+            android:layout_marginBottom="15dp"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center">
+                <Button
+                    android:background="@color/colorPrimary"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    android:id="@+id/bottomLeftOuter"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:adjustViewBounds="true"
+                    android:clickable="true"
 
-    <Button
-        android:id="@+id/call_csafety_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Call Campus Safety"/>
-    <Button
-        android:id="@+id/call_health_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Call health cetner"/>
+                    android:layout_margin="10dp"
+                    android:text="Campus Safety">
+                </Button>
 
-    <Button
-        android:id="@+id/call_counseling_button"
+                <Button
+                    android:id="@+id/topRightOuter"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:adjustViewBounds="true"
+                    android:background="@color/colorPrimary"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:layout_margin="10dp"
+                    android:text="Health  Center">
+                </Button>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center">
+
+                <Button
+                    android:id="@+id/bottomRightOuter"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:adjustViewBounds="true"
+                    android:background="@color/colorPrimary"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:layout_margin="10dp"
+                    android:text="Counselling Center">
+                </Button>
+
+                <Button
+                    android:id="@+id/topLeftOuter"
+                    android:layout_width="110dp"
+                    android:layout_height="110dp"
+                    android:adjustViewBounds="true"
+                    android:background="@color/colorPrimary"
+                    android:textColor="@color/colorAccent"
+                    android:textStyle="bold"
+                    android:clickable="true"
+                    android:layout_margin="10dp"
+                    android:text="Title IX      Office"
+
+                    >
+                </Button>
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/or_textview"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Call counseling center"/>
-    <Button
-        android:id="@+id/call_title_9_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Call Title-IX office"/>
+        android:layout_below="@+id/buttons_relative"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="15dp"
+        android:text="OR"
+        android:textSize="14pt"
+        android:textColor="@color/colorPrimaryDark"/>
+
 
     <Button
         android:id="@+id/add_report_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Submit a Report"
-        android:layout_marginTop="100dp"/>
+        android:layout_below="@+id/or_textview"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="15dp"
+        android:background="@color/colorAccent"
+        android:padding="10dp"
+        />
 
-</LinearLayout>
+</RelativeLayout>

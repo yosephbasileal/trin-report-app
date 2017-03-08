@@ -26,9 +26,9 @@ public class MainActivity extends AppCompatActivity {
         ApplicationContext.getInstance().init(getApplicationContext());
 
         // setup toolbar
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
+/*        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar_main);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setTitle(null);
+        getSupportActionBar().setTitle(null);*/
 
         fm = getFragmentManager();
 

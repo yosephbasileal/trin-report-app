@@ -6,7 +6,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.report.AddReportStep1;
 
 public class AddReportActivity extends AppCompatActivity {
 
@@ -15,7 +14,7 @@ public class AddReportActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_report);
 
-        Fragment fragStep1 = AddReportStep1.newInstance();
+        Fragment fragStep1 = AddReportFragment.newInstance();
 
         FragmentManager fm = getFragmentManager();
 
