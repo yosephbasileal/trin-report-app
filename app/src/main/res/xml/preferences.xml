@@ -21,4 +21,16 @@
             android:singleLine="true"
             android:inputType="number" />
 
+        <EditTextPreference
+            android:title="Email"
+            android:key="useremail"
+            android:singleLine="true"
+            android:inputType="textEmailAddress" />
+
+        <EditTextPreference
+            android:title="Dorm"
+            android:key="useremail"
+            android:singleLine="true"
+            android:inputType="text" />
+
 </PreferenceScreen>
