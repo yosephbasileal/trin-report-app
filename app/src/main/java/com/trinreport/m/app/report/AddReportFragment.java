@@ -188,7 +188,7 @@ public class AddReportFragment extends Fragment {
 
         // setup list, adapter and recyclerview for selected images
         mImagePathList = new ArrayList<>();
-        String imageUri = "drawable://" + R.drawable.add;
+        String imageUri = "drawable://" + R.drawable.add2;
         mImagePathList.add(imageUri);
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.HORIZONTAL, false);
         mPhotoRecyclerView = (RecyclerView) v.findViewById(R.id.images_recycler_view);
