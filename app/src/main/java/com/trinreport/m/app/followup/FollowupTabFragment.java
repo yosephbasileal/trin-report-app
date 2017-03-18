@@ -1,6 +1,7 @@
-package com.trinreport.m.app;
+package com.trinreport.m.app.followup;
 
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -12,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +23,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.R;
+import com.trinreport.m.app.URL;
 import com.trinreport.m.app.data.Thread;
 
 import org.json.JSONArray;
@@ -37,13 +41,13 @@ import java.util.Set;
 
 /**
  * A simple {@link Fragment} subclass.
- * Use the {@link HistoryTabFragment#newInstance} factory method to
+ * Use the {@link FollowupTabFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HistoryTabFragment extends Fragment {
+public class FollowupTabFragment extends Fragment {
 
     // constants
-    private static final String TAG = "HistoryTabFragment";
+    private static final String TAG = "FollowupTabFragment";
 
     private static int MAX_THREAD_COUNT = 100;
 
@@ -59,14 +63,14 @@ public class HistoryTabFragment extends Fragment {
      * Factory method to create a new instance of
      * this fragment using the provided parameters.
      *
-     * @return A new instance of fragment HistoryTabFragment.
+     * @return A new instance of fragment FollowupTabFragment.
      */
-    public static HistoryTabFragment newInstance() {
-        HistoryTabFragment fragment = new HistoryTabFragment();
+    public static FollowupTabFragment newInstance() {
+        FollowupTabFragment fragment = new FollowupTabFragment();
         return fragment;
     }
 
-    public HistoryTabFragment() {
+    public FollowupTabFragment() {
         // empty
         mThreadsList = new ArrayList<>();
     }
@@ -88,7 +92,7 @@ public class HistoryTabFragment extends Fragment {
         mThreadsRecyclerView = (RecyclerView) v.findViewById(R.id.listview_threads);
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mThreadsRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new HistoryTabFragment.ThreadsAdapter();
+        mAdapter = new FollowupTabFragment.ThreadsAdapter();
         mThreadsRecyclerView.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
 
@@ -103,54 +107,71 @@ public class HistoryTabFragment extends Fragment {
         return reports;
     }
 
+    private void startFollowupChatActivity(String thread_id) {
+        Intent i = new Intent(getActivity(), FollowupChatActivity.class);
+        i.putExtra(FollowupChatActivity.EXTRA_THREAD_ID, thread_id);
+        startActivity(i);
+    }
+
     /**
      *   ViewHolder for displaying snaps in a RecyclerView
      */
     private class ThreadHolder extends RecyclerView.ViewHolder {
 
-        public final ImageView iconView;
-        public final TextView titleView;
-        public final TextView messageView;
-        public final TextView highTextView;
-        public final TextView lowTextView;
+        private final LinearLayout mView;
+        private final ImageView iconView;
+        private final TextView titleView;
+        private final TextView messageView;
+        private final TextView highTextView;
+        private final TextView lowTextView;
 
         public ThreadHolder(View view) {
             super(view);
+            mView = (LinearLayout) view.findViewById(R.id.list_item_thread);
             iconView = (ImageView) view.findViewById(R.id.list_item_icon);
             titleView = (TextView) view.findViewById(R.id.list_item_title_textview);
             messageView = (TextView) view.findViewById(R.id.list_item_last_message_textview);
             highTextView = (TextView) view.findViewById(R.id.list_item_high_textview);
             lowTextView = (TextView) view.findViewById(R.id.list_item_low_textview);
+
+
         }
 
 
         public void bindView(final int Position) {
 
-            Thread thread = mThreadsList.get(Position);
+            final Thread thread = mThreadsList.get(Position);
             titleView.setText(thread.getTitle());
             messageView.setText(thread.getLastMessage());
 
             // TODO: convert date to friendly string
             lowTextView.setText(thread.getLastUpdated().toString());
 
+            mView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startFollowupChatActivity(thread.getThreadId());
+                }
+            });
+
         }
     }
 
-    private class ThreadsAdapter extends RecyclerView.Adapter<HistoryTabFragment.ThreadHolder> {
+    private class ThreadsAdapter extends RecyclerView.Adapter<FollowupTabFragment.ThreadHolder> {
 
         public ThreadsAdapter() {
 
         }
 
         @Override
-        public HistoryTabFragment.ThreadHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
+        public FollowupTabFragment.ThreadHolder onCreateViewHolder(ViewGroup viewGroup, int viewType) {
             LayoutInflater inflater = LayoutInflater.from(getActivity());
             View view = inflater.inflate(R.layout.list_item_thread, viewGroup, false);
-            return new HistoryTabFragment.ThreadHolder(view);
+            return new FollowupTabFragment.ThreadHolder(view);
         }
 
         @Override
-        public void onBindViewHolder(HistoryTabFragment.ThreadHolder photoHolder, int position) {
+        public void onBindViewHolder(FollowupTabFragment.ThreadHolder photoHolder, int position) {
             photoHolder.bindView(position);
         }
 
@@ -177,14 +198,15 @@ public class HistoryTabFragment extends Fragment {
                     JSONArray jsonarray = jsonObj.getJSONArray("threads");
                     Log.d(TAG, "JsonArray: " + jsonarray);
 
+                    mThreadsList.clear();
                     for (int i = 0; i < jsonarray.length(); i++) {
                         JSONObject jsonobject = jsonarray.getJSONObject(i);
                         String title = jsonobject.getString("title");
                         String last_updated = jsonobject.getString("last_updated");
                         String last_message = jsonobject.getString("last_message");
-                        String report_id = jsonobject.getString("report_id");
+                        String thread_id = jsonobject.getString("id");
 
-                        Thread thread = new Thread(last_message, new Date(), report_id, title);
+                        Thread thread = new Thread(last_message, new Date(), thread_id, title);
                         mThreadsList.add(thread);
                         mAdapter.notifyDataSetChanged();
 

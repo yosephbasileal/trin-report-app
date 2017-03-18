@@ -28,4 +28,6 @@ public class URL {
 
     // followup urls
     public static String GET_FOLLOW_UP_THREADS = RDDP_SERVER_DOMAIN + "/get-followup-threads";
+    public static String GET_FOLLOW_UP_MESSAGES = RDDP_SERVER_DOMAIN + "/get-followup-messages";
+    public static String SEND_FOLLOW_UP_MESSAGE = RDDP_SERVER_DOMAIN + "/send-followup-message";
 }

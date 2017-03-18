@@ -6,10 +6,15 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <user-permission android:name="android.permission.WRITE_SETTINGS" />
 
-    <uses-feature android:name="android.hardware.camera" android:required="true" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="18" />
 
     <application
@@ -22,6 +27,7 @@
         <activity android:name=".authentication.StartPageActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -37,15 +43,16 @@
         <activity
             android:name=".report.AddReportActivity"
             android:screenOrientation="portrait" />
-
         <activity
             android:name=".emergency.Emergency"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".emergency.EmergencyStatusService"
-            android:exported="false"></service>
+            android:exported="false" />
+
+        <activity android:name=".followup.FollowupChatActivity"></activity>
     </application>
 
 </manifest>

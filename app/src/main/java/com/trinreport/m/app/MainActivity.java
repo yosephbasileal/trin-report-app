@@ -9,6 +9,7 @@ import android.os.Bundle;
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
 import com.trinreport.m.app.emergency.EmergencyTabFragment;
+import com.trinreport.m.app.followup.FollowupTabFragment;
 import com.trinreport.m.app.report.ReportTabFragment;
 
 public class MainActivity extends AppCompatActivity {
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
         frag_emergency = EmergencyTabFragment.newInstance();
         frag_report = ReportTabFragment.newInstance();
-        frag_history = HistoryTabFragment.newInstance();
+        frag_history = FollowupTabFragment.newInstance();
         frag_settings = SettingsTabFragment.newInstance();
 
         fm.beginTransaction().add(R.id.main_activity_container, frag_emergency).commit();

@@ -10,7 +10,7 @@
     <tab
         id="@+id/tab_history"
         icon="@drawable/ic_history"
-        title="History"/>
+        title="Followup"/>
     <tab
         id="@+id/tab_settings"
         icon="@drawable/ic_user"

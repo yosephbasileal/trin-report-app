@@ -12,13 +12,13 @@ public class Thread {
     private List<String> mMessages;
     private String mLastMessage;
     private Date mLastUpdated;
-    private String mReportId;
+    private String mThreadId;
     private String mTitle;
 
-    public Thread(String lastMessage, Date lastUpdated, String reportId, String title) {
+    public Thread(String lastMessage, Date lastUpdated, String threadId, String title) {
         mLastMessage = lastMessage;
         mLastUpdated = lastUpdated;
-        mReportId = reportId;
+        mThreadId = threadId;
         mTitle = title;
     }
 
@@ -37,8 +37,8 @@ public class Thread {
         return mLastUpdated;
     }
 
-    public String getReportId() {
-        return mReportId;
+    public String getThreadId() {
+        return mThreadId;
     }
 
     public String getTitle() {

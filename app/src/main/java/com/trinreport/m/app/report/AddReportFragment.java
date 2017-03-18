@@ -487,9 +487,7 @@ public class AddReportFragment extends Fragment {
         startActivityForResult(Intent.createChooser(uploadPictureIntent, "Select Picture"), REQUEST_IMAGE_UPLOAD);
     }
 
-    /**
-     *   ViewHolder for displaying snaps in a RecyclerView
-     */
+
     private class PhotoHolder extends RecyclerView.ViewHolder {
 
         private ImageView mItemImageView;
@@ -528,9 +526,6 @@ public class AddReportFragment extends Fragment {
     }
 
 
-    /**
-     *   Adapter for displaying snaps in a RecyclerView
-     */
     private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
 
         public PhotoAdapter() {
