@@ -5,7 +5,6 @@ import android.app.FragmentManager;
 import android.support.annotation.IdRes;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.Toolbar;
 
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
@@ -34,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
 
         frag_emergency = EmergencyTabFragment.newInstance();
         frag_report = ReportTabFragment.newInstance();
-        frag_history = HistoryTab.newInstance();
+        frag_history = HistoryTabFragment.newInstance();
         frag_settings = SettingsTabFragment.newInstance();
 
         fm.beginTransaction().add(R.id.main_activity_container, frag_emergency).commit();

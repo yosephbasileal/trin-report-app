@@ -10,17 +10,25 @@ import java.util.List;
 public class Thread {
 
     private List<String> mMessages;
+    private String mLastMessage;
     private Date mLastUpdated;
-    private int mReportId;
+    private String mReportId;
     private String mTitle;
 
-    public Thread(List<String> messages, Date lastUpdated, int reportId, String title) {
-        mMessages = messages;
+    public Thread(String lastMessage, Date lastUpdated, String reportId, String title) {
+        mLastMessage = lastMessage;
         mLastUpdated = lastUpdated;
         mReportId = reportId;
         mTitle = title;
     }
 
+    public void setMessages(List<String> messages) {
+        mMessages = messages;
+    }
+
+    public String getLastMessage() {
+        return mLastMessage;
+    }
     public List<String> getMessages() {
         return mMessages;
     }
@@ -29,7 +37,7 @@ public class Thread {
         return mLastUpdated;
     }
 
-    public int getReportId() {
+    public String getReportId() {
         return mReportId;
     }
 

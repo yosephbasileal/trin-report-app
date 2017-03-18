@@ -123,12 +123,12 @@ public class EmergencyTabFragment extends Fragment {
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
                 try {
-                    // get user id assigned by authentication server
+                    // get emergency id assigned by authentication server
                     JSONObject jsonObj = new JSONObject(response);
-                    String report_id = jsonObj.get("emergency_id").toString();
+                    String emergency_id = jsonObj.get("emergency_id").toString();
 
                     // open EmergencyActivity
-                    startEmergencyActivity(report_id);
+                    startEmergencyActivity(emergency_id);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
                 }

@@ -33,6 +33,7 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -47,6 +48,7 @@ import com.trinreport.m.app.URL;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -60,8 +62,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cz.msebera.android.httpclient.HttpEntity;
 import cz.msebera.android.httpclient.HttpResponse;
@@ -86,6 +90,9 @@ import static android.app.Activity.RESULT_OK;
  * create an instance of this fragment.
  */
 public class AddReportFragment extends Fragment {
+
+    // constants
+    private static final String TAG = "AddReportFragment";
 
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
@@ -123,6 +130,8 @@ public class AddReportFragment extends Fragment {
     private boolean mIsAnonymous;
     private boolean mFollowupEnabled;
     private boolean mResEmployeeChecked;
+
+    private SharedPreferences mSharedPreferences;
 
     // tor client
     private HttpClient mHttpclient;
@@ -170,6 +179,8 @@ public class AddReportFragment extends Fragment {
         mFollowupCheckbox = (CheckBox) v.findViewById(R.id.checkbox_followup);
         mResEmployeeCheckbox = (CheckBox) v.findViewById(R.id.checkbox_responsible);
         mSubmitbutton = (Button) v.findViewById(R.id.button_submit);
+
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
 
         // setup toolbar
@@ -553,25 +564,39 @@ public class AddReportFragment extends Fragment {
     }
 
     private void sendReportNonAnonymous() {
-
+        // get url
         String url = URL.SEND_REPORT;
 
+        // create request
         RequestQueue MyRequestQueue = Volley.newRequestQueue(this.getActivity());
+
         StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
-                //This code is executed if the server responds, whether or not the response contains data.
-                //The String 'response' contains the server's response.
+                Log.d(TAG, "Volley Sucess: " + response);
+                try {
+                    // get report id assigned by authentication server
+                    JSONObject jsonObj = new JSONObject(response);
+                    String report_id = jsonObj.get("report_id").toString();
+                    addReportToList(report_id);
+
+                } catch (JSONException e) {
+                    Log.d(TAG, "JSONException: " + e.toString());
+                }
             }
         }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
             @Override
             public void onErrorResponse(VolleyError error) {
-                //This code is executed if there is an error.
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getActivity(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap();
 
+                String auth_token = mSharedPreferences.getString("auth_token", "");
+                MyData.put("auth_token", auth_token);
                 MyData.put("type", mType);
                 MyData.put("urgency", mUrgency );
                 MyData.put("year", 1900 + mDate.getYear() +  "" );
@@ -662,10 +687,12 @@ public class AddReportFragment extends Fragment {
                     Thread.sleep(90);
                 }
                 //url with the post data
-                HttpPost httpost = new HttpPost(URL.SEND_REPORT_ANON);
+                HttpPost httpost = new HttpPost(URL.SEND_REPORT);
 
                 //convert parameters into JSON object
                 Map<String, String> MyData = new HashMap();
+                String auth_token = mSharedPreferences.getString("auth_token", "");
+                MyData.put("auth_token", auth_token);
                 MyData.put("type", mType);
                 MyData.put("urgency", mUrgency );
                 MyData.put("year", 1900 + mDate.getYear() +  "" );
@@ -705,6 +732,13 @@ public class AddReportFragment extends Fragment {
                     // A Simple JSON Response Read
                     InputStream instream = entity.getContent();
                     String result= convertStreamToString(instream);
+
+                    // get report id assigned by authentication server
+                    JSONObject jsonObj = new JSONObject(result);
+                    String report_id = jsonObj.get("report_id").toString();
+                    addReportToList(report_id);
+
+
                     Log.d("TorTest", "Result: " + result);
                     // now you have the string representation of the HTML request
                     instream.close();
@@ -749,5 +783,20 @@ public class AddReportFragment extends Fragment {
             }
         }
         return sb.toString();
+    }
+
+    private void addReportToList(String reportId) {
+        // get list
+        Set<String> reportsSet = mSharedPreferences
+                .getStringSet("reports_set", new HashSet<String>());
+        List<String> reports = new ArrayList<>(reportsSet);
+        // add report id to list
+        reports.add(reportId);
+        // commit to shared prefs
+        reportsSet = new HashSet<>(reports);
+        mSharedPreferences
+                .edit()
+                .putStringSet("reports_set", reportsSet)
+                .apply();
     }
 }

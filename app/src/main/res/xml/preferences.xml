@@ -29,7 +29,7 @@
 
         <EditTextPreference
             android:title="Dorm"
-            android:key="useremail"
+            android:key="userdorm"
             android:singleLine="true"
             android:inputType="text" />
 
