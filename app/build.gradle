@@ -35,11 +35,11 @@ dependencies {
     testCompile 'junit:junit:4.12'
     compile 'com.nimbusds:nimbus-jose-jwt:4.34.1'
     compile 'net.minidev:minidev-parent:2.2'
-
     compile 'com.github.jehy:Tor-Onion-Proxy-Library:0.0.5'
     compile 'org.slf4j:slf4j-api:1.7.7'
     compile 'org.slf4j:slf4j-android:1.7.7'
-    compile "cz.msebera.android:httpclient:4.4.1.2"
+    compile 'cz.msebera.android:httpclient:4.4.1.2'
+    compile 'com.android.support:recyclerview-v7:23.2.1'
 }
 
 /*configurations.compile {

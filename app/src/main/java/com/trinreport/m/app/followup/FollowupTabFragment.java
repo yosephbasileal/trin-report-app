@@ -17,6 +17,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,15 +30,14 @@ import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
-import com.trinreport.m.app.data.ChatMessage;
-import com.trinreport.m.app.data.Thread;
+import com.trinreport.m.app.model.ChatMessage;
+import com.trinreport.m.app.model.Thread;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -139,7 +139,7 @@ public class FollowupTabFragment extends Fragment {
      */
     private class ThreadHolder extends RecyclerView.ViewHolder {
 
-        private final LinearLayout mView;
+        private final RelativeLayout mView;
         private final ImageView iconView;
         private final TextView titleView;
         private final TextView messageView;
@@ -148,7 +148,7 @@ public class FollowupTabFragment extends Fragment {
 
         public ThreadHolder(View view) {
             super(view);
-            mView = (LinearLayout) view.findViewById(R.id.list_item_thread);
+            mView = (RelativeLayout) view.findViewById(R.id.list_item_thread);
             iconView = (ImageView) view.findViewById(R.id.list_item_icon);
             titleView = (TextView) view.findViewById(R.id.list_item_title_textview);
             messageView = (TextView) view.findViewById(R.id.list_item_last_message_textview);
@@ -164,7 +164,7 @@ public class FollowupTabFragment extends Fragment {
             messageView.setText(thread.getLastMessage());
 
             // TODO: convert date to friendly string
-            lowTextView.setText(thread.getLastUpdated().toString());
+            lowTextView.setText(thread.getNiceTimestamp());
 
             mView.setOnClickListener(new View.OnClickListener() {
                 @Override

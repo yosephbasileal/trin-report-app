@@ -1,7 +1,10 @@
-package com.trinreport.m.app.data;
+package com.trinreport.m.app.database;
 
 import android.database.Cursor;
 import android.database.CursorWrapper;
+
+import com.trinreport.m.app.model.ChatMessage;
+import com.trinreport.m.app.model.Thread;
 
 /**
  * Created by bimana2 on 3/24/17.

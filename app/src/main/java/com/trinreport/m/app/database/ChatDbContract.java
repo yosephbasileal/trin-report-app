@@ -1,4 +1,4 @@
-package com.trinreport.m.app.data;
+package com.trinreport.m.app.database;
 
 import android.provider.BaseColumns;
 

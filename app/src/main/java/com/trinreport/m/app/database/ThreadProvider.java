@@ -1,4 +1,4 @@
-package com.trinreport.m.app.data;
+package com.trinreport.m.app.database;
 
 import android.annotation.TargetApi;
 import android.content.ContentProvider;
@@ -6,7 +6,6 @@ import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
 
 public class ThreadProvider extends ContentProvider {

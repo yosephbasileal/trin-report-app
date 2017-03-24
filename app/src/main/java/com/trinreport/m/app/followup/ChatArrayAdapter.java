@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.data.ChatMessage;
+import com.trinreport.m.app.model.ChatMessage;
 
 class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
 

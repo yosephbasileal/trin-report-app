@@ -1,6 +1,5 @@
 package com.trinreport.m.app.followup;
 
-import android.database.DataSetObserver;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,11 +11,8 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AbsListView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
-import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -30,13 +26,11 @@ import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
-import com.trinreport.m.app.data.ChatMessage;
-import com.trinreport.m.app.data.Thread;
+import com.trinreport.m.app.model.ChatMessage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -358,6 +352,7 @@ public class FollowupChatActivity extends AppCompatActivity {
             super.onPostExecute(result);
             mMessagesList = result;
             mAdapter.notifyDataSetChanged();
+            mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
         }
     }
 }

@@ -5,11 +5,11 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.trinreport.m.app.data.ChatDbContract;
-import com.trinreport.m.app.data.ChatDbCursorWrapper;
-import com.trinreport.m.app.data.ChatDbHelper;
-import com.trinreport.m.app.data.ChatMessage;
-import com.trinreport.m.app.data.Thread;
+import com.trinreport.m.app.database.ChatDbContract;
+import com.trinreport.m.app.database.ChatDbCursorWrapper;
+import com.trinreport.m.app.database.ChatDbHelper;
+import com.trinreport.m.app.model.ChatMessage;
+import com.trinreport.m.app.model.Thread;
 
 import java.util.ArrayList;
 

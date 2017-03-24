@@ -1,11 +1,11 @@
-package com.trinreport.m.app.data;
+package com.trinreport.m.app.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.trinreport.m.app.data.ThreadContract.ThreadEntry;
-import com.trinreport.m.app.data.ThreadContract.MessageEntry;
+import com.trinreport.m.app.database.ThreadContract.ThreadEntry;
+import com.trinreport.m.app.database.ThreadContract.MessageEntry;
 
 /**
  * Manages a local database for thread data.
