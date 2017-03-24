@@ -11,11 +11,11 @@ public class Thread {
 
     private List<String> mMessages;
     private String mLastMessage;
-    private Date mLastUpdated;
+    private String mLastUpdated;
     private String mThreadId;
     private String mTitle;
 
-    public Thread(String lastMessage, Date lastUpdated, String threadId, String title) {
+    public Thread(String lastMessage, String lastUpdated, String threadId, String title) {
         mLastMessage = lastMessage;
         mLastUpdated = lastUpdated;
         mThreadId = threadId;
@@ -33,7 +33,7 @@ public class Thread {
         return mMessages;
     }
 
-    public Date getLastUpdated() {
+    public String getLastUpdated() {
         return mLastUpdated;
     }
 

@@ -3,11 +3,14 @@ package com.trinreport.m.app.followup;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -23,8 +26,10 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
+import com.trinreport.m.app.data.ChatMessage;
 import com.trinreport.m.app.data.Thread;
 
 import org.json.JSONArray;
@@ -56,6 +61,7 @@ public class FollowupTabFragment extends Fragment {
     private RecyclerView mThreadsRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
+    private Toolbar mToolbar;
 
     private SharedPreferences mSharedPreferences;
 
@@ -85,18 +91,32 @@ public class FollowupTabFragment extends Fragment {
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mReportIdList = getReportIds();
 
-        // get threads from server
-        getFollowUpThreads();
+        // updates threads data from server
+        //getFollowUpThreads();
 
         // attach adpater to recycler view
+        mToolbar = (Toolbar) v.findViewById(R.id.toolbar_followup);
         mThreadsRecyclerView = (RecyclerView) v.findViewById(R.id.listview_threads);
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mThreadsRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FollowupTabFragment.ThreadsAdapter();
         mThreadsRecyclerView.setAdapter(mAdapter);
-        mAdapter.notifyDataSetChanged();
+        updateThreadsList();
+
+        // setup toolbar
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Follow Up");
+        }
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // updates threads data from server
+        getFollowUpThreads();
     }
 
     private List<String> getReportIds() {
@@ -107,9 +127,10 @@ public class FollowupTabFragment extends Fragment {
         return reports;
     }
 
-    private void startFollowupChatActivity(String thread_id) {
+    private void startFollowupChatActivity(String thread_id, int position) {
         Intent i = new Intent(getActivity(), FollowupChatActivity.class);
         i.putExtra(FollowupChatActivity.EXTRA_THREAD_ID, thread_id);
+        i.putExtra(FollowupChatActivity.EXTRA_THREAD_TITLE, mThreadsList.get(position).getTitle());
         startActivity(i);
     }
 
@@ -133,8 +154,6 @@ public class FollowupTabFragment extends Fragment {
             messageView = (TextView) view.findViewById(R.id.list_item_last_message_textview);
             highTextView = (TextView) view.findViewById(R.id.list_item_high_textview);
             lowTextView = (TextView) view.findViewById(R.id.list_item_low_textview);
-
-
         }
 
 
@@ -150,7 +169,7 @@ public class FollowupTabFragment extends Fragment {
             mView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    startFollowupChatActivity(thread.getThreadId());
+                    startFollowupChatActivity(thread.getThreadId(), Position);
                 }
             });
 
@@ -181,6 +200,10 @@ public class FollowupTabFragment extends Fragment {
         }
     }
 
+    private void updateThreadsList() {
+        new GetThreadList().execute();
+    }
+
     private void getFollowUpThreads() {
         // get url
         String url = URL.GET_FOLLOW_UP_THREADS;
@@ -198,7 +221,9 @@ public class FollowupTabFragment extends Fragment {
                     JSONArray jsonarray = jsonObj.getJSONArray("threads");
                     Log.d(TAG, "JsonArray: " + jsonarray);
 
-                    mThreadsList.clear();
+                    //mThreadsList.clear();
+                    ChatBook.getChatBook(getActivity()).deleteThreads();
+
                     for (int i = 0; i < jsonarray.length(); i++) {
                         JSONObject jsonobject = jsonarray.getJSONObject(i);
                         String title = jsonobject.getString("title");
@@ -206,11 +231,28 @@ public class FollowupTabFragment extends Fragment {
                         String last_message = jsonobject.getString("last_message");
                         String thread_id = jsonobject.getString("id");
 
-                        Thread thread = new Thread(last_message, new Date(), thread_id, title);
-                        mThreadsList.add(thread);
-                        mAdapter.notifyDataSetChanged();
+                        Thread thread = new Thread(last_message, last_updated, thread_id, title);
+                        ChatBook.getChatBook(getActivity()).addThread(thread);
+
+                        JSONArray jsonarray2 = jsonobject.getJSONArray("messages");
+                        for (int j = 0; j < jsonarray2.length(); j++) {
+                            JSONObject jsonobject2 = jsonarray2.getJSONObject(j);
+                            String timestamp = jsonobject2.getString("timestamp");
+                            String content = jsonobject2.getString("content");
+                            String from_admin = jsonobject2.getInt("from_admin") + "";
+
+                            ChatMessage message = new ChatMessage(from_admin, content, timestamp, thread_id);
+                            ChatBook.getChatBook(getActivity()).addMessage(message);
+                        }
+
+                        //mThreadsList.add(thread);
+                        //mAdapter.notifyDataSetChanged();
+                        // add to database
 
                     }
+                    //mAdapter.notifyDataSetChanged();
+                    updateThreadsList();
+
 
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
@@ -236,6 +278,27 @@ public class FollowupTabFragment extends Fragment {
 
         // add to queue
         requestQueue.add(stringRequest);
+    }
+
+    /**
+     * Async task for gets thread list in the background
+     */
+    private class GetThreadList extends
+            AsyncTask<Void, String, ArrayList<Thread>> {
+
+        @Override
+        protected ArrayList<Thread> doInBackground(Void... params) {
+            ChatBook book = ChatBook.getChatBook(getActivity());
+            ArrayList<Thread> threads = book.getThreads();
+            return threads;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<Thread> result) {
+            super.onPostExecute(result);
+            mThreadsList = result;
+            mAdapter.notifyDataSetChanged();
+        }
     }
 
 }

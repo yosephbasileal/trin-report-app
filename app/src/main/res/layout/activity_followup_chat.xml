@@ -5,12 +5,12 @@
     android:id="@+id/activity_followup_chat"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="5dp"
     tools:context="com.trinreport.m.app.followup.FollowupChatActivity">
 
     <android.support.v7.widget.Toolbar
         android:id="@+id/toolbar_chat"
         android:layout_width="match_parent"
+        android:paddingRight="8dp"
         android:layout_height="56dp"
         android:background="@color/colorActionBar"
         app:theme="@style/ThemeOverlay.AppCompat.Light"
@@ -19,35 +19,50 @@
 
     <LinearLayout
         android:id="@+id/form"
-
+        android:background="@drawable/border"
+        android:paddingRight="16dp"
+        android:layout_marginBottom="8dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="50dp"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:weightSum="3">
+        android:weightSum="3"
+        android:gravity="center">
 
         <EditText
             android:id="@+id/msg"
+            android:background="@android:color/transparent"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:hint="Enter a message"
             android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="2" />
+            android:layout_height="match_parent"
+            android:layout_weight="3" />
 
-        <Button
-            android:id="@+id/send"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_weight="1"
-            android:text="Send" />
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6dp">
 
+            <ImageButton
+                android:id="@+id/send"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:text="Send"
+                android:src="@drawable/send"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"/>
+        </FrameLayout>
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/msgview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
         android:background="@null"
-        android:divider="@null"
         android:stackFromBottom="true"
         android:transcriptMode="alwaysScroll"
         android:layout_above="@id/form"

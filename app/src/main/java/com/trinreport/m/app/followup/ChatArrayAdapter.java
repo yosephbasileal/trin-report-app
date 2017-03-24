@@ -42,7 +42,7 @@ class ChatArrayAdapter extends ArrayAdapter<ChatMessage> {
         ChatMessage chatMessageObj = getItem(position);
         View row = convertView;
         LayoutInflater inflater = (LayoutInflater) this.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        if (chatMessageObj.isAdmin) {
+        if (chatMessageObj.isAdmin.equals("1")) {
             row = inflater.inflate(R.layout.chat_view_right, parent, false);
         } else {
             row = inflater.inflate(R.layout.chat_view_left, parent, false);

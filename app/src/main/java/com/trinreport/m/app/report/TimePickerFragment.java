@@ -29,6 +29,8 @@ public class TimePickerFragment extends DialogFragment {
     private TimePicker mTimePicker;
     private Date mDate;
 
+    private OnCompleteTimeListener mListener;
+
 
     public static TimePickerFragment newInstance(Date date) {
         Bundle args = new Bundle();
@@ -82,13 +84,30 @@ public class TimePickerFragment extends DialogFragment {
     }
 
     private void sendResult(int resultCode, Date date) {
-        if(getTargetFragment() == null) {
+        this.mListener.onCompleteTime(date);
+
+        /*if(getTargetFragment() == null) {
             return;
         }
         Intent intent = new Intent();
         intent.putExtra(EXTRA_TIME, date);
 
         getTargetFragment()
-                .onActivityResult(getTargetRequestCode(), resultCode, intent);
+                .onActivityResult(getTargetRequestCode(), resultCode, intent);*/
+    }
+
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            this.mListener = (OnCompleteTimeListener)activity;
+        }
+        catch (final ClassCastException e) {
+            throw new ClassCastException(activity.toString() + " must implement OnCompleteListener");
+        }
+    }
+
+    public static interface OnCompleteTimeListener {
+        public abstract void onCompleteTime(Date time);
     }
 }

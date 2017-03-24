@@ -1,16 +1,37 @@
 package com.trinreport.m.app.data;
 
+import android.content.SharedPreferences;
+
 import java.util.Date;
 
 public class ChatMessage {
-    public boolean isAdmin;  // sent by admin
+    public String isAdmin;  // sent by admin
     public String message;
-    private Date timestamp;
+    private String timestamp;
+    private String thread_id;
 
-    public ChatMessage(boolean admin, String message, Date timestamp) {
+    public ChatMessage(String admin, String message, String timestamp, String thread_id) {
         super();
         this.isAdmin = admin;
         this.message = message;
         this.timestamp = timestamp;
+        this.thread_id = thread_id;
+    }
+
+    public String getIsAdmin() {
+        return isAdmin;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getThreadId() {
+        return thread_id;
     }
 }
+

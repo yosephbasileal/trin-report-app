@@ -97,6 +97,15 @@ public class Emergency extends AppCompatActivity {
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
 
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                onBackPressed();
+
+            }
+        });
+
         // get report id from intent
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
 
