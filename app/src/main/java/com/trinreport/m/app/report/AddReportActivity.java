@@ -42,8 +42,11 @@ import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
 import com.msopentech.thali.toronionproxy.OnionProxyManager;
+import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
+import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
+import com.trinreport.m.app.model.ChatKey;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
@@ -56,6 +59,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.security.KeyPair;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -122,6 +128,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private boolean mResEmployeeChecked;
 
     private SharedPreferences mSharedPreferences;
+    private String mAdminPublicKey;
 
     // tor client
     private HttpClient mHttpclient;
@@ -159,6 +166,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mSubmitbutton = (Button) findViewById(R.id.button_submit);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mAdminPublicKey = mSharedPreferences.getString("admin_public_key", "");
 
 
         // setup toolbar
@@ -603,12 +611,31 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData.put("is_resp_emp", mResEmployeeChecked + "");
                 MyData.put("follow_up_enabled", mFollowupEnabled + "");
 
+                try{
+                    //////
+                    // generate RSA keys
+                    KeyPair keyPair = RSA.generateRsaKeyPair(2048);
+                    String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
+                    String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
+
+                    // generate cookie
+                    String reportId = generateCookie();
+                    ChatBook.getChatBook(getApplicationContext()).addChatKey(
+                            new ChatKey(reportId, privateKeyPem)
+                    );
+                    MyData.put("public_key", publicKeyPem);
+                    MyData.put("report_id", reportId);
+                } catch (Exception e) {
+
+                }
+
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
                 MyData.put("username", prefs.getString("username", ""));
                 MyData.put("userdorm", prefs.getString("userdorm", ""));
                 MyData.put("useremail", prefs.getString("useremail", ""));
                 MyData.put("userphone", prefs.getString("userphone", ""));
                 MyData.put("userid", prefs.getString("userid", ""));
+
 
                 return MyData;
             }
@@ -671,6 +698,10 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         }
     }
 
+    private String encrypt(String plain) throws Exception {
+        return RSA.encrypt(plain, mAdminPublicKey);
+    }
+
     private class ReportThroughTor extends AsyncTask<String, Void, String> {
 
         @Override
@@ -684,8 +715,8 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
                 //convert parameters into JSON object
                 Map<String, String> MyData = new HashMap();
-                String auth_token = mSharedPreferences.getString("auth_token", "");
-                MyData.put("auth_token", auth_token);
+                //String auth_token = mSharedPreferences.getString("auth_token", "");
+                //MyData.put("auth_token", auth_token);
                 MyData.put("type", mType);
                 MyData.put("urgency", mUrgency );
                 MyData.put("year", 1900 + mDate.getYear() +  "" );
@@ -696,8 +727,23 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData.put("location", mLocation);
                 MyData.put("description", mDescription);
                 MyData.put("is_anonymous", mIsAnonymous + "");
-                MyData.put("is_resp_emp", mDescriptionText + "");
+                MyData.put("is_resp_emp", mResEmployeeChecked + "");
                 MyData.put("follow_up_enabled", mFollowupEnabled + "");
+
+                //////
+                // generate RSA keys
+                KeyPair keyPair = RSA.generateRsaKeyPair(2048);
+                String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
+                String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
+
+                // generate cookie
+                String reportId = generateCookie();
+                ChatBook.getChatBook(getApplicationContext()).addChatKey(
+                        new ChatKey(reportId, privateKeyPem)
+                );
+                MyData.put("public_key", publicKeyPem);
+                MyData.put("report_id", reportId);
+                //////
 
                 JSONObject holder = new JSONObject(MyData);
 
@@ -791,5 +837,38 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 .edit()
                 .putStringSet("reports_set", reportsSet)
                 .apply();
+    }
+
+    private String generateCookie() {
+        try {
+            // generate thread cookie
+            String input = (new Date()).toString(); // using timestamp for now
+            MessageDigest digest;
+            String cookie;
+            digest = MessageDigest.getInstance("SHA-256");
+            digest.update(input.getBytes());
+            cookie = bytesToHexString(digest.digest());
+            Log.i(TAG, "Hash is " + cookie);
+            return cookie;
+
+        } catch (Exception e) {
+            Log.d(TAG, "Exception: " + e.toString());
+            e.printStackTrace();
+        }
+        return "";
+    }
+
+
+    private static String bytesToHexString(byte[] bytes) {
+        // http://stackoverflow.com/questions/332079
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < bytes.length; i++) {
+            String hex = Integer.toHexString(0xFF & bytes[i]);
+            if (hex.length() == 1) {
+                sb.append('0');
+            }
+            sb.append(hex);
+        }
+        return sb.toString();
     }
 }

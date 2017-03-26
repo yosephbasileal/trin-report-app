@@ -28,4 +28,11 @@ public class ChatDbContract {
         public static final String COLUMN_IS_ADMIN = "is_admin";
         public static final String COLUMN_THREAD_ID = "thread_id";
     }
+
+    /* Inner class that defines the table contents */
+    public static class KeyEntry implements BaseColumns {
+        public static final String TABLE_NAME = "keys";
+        public static final String COLUMN_PRIVATE_KEY = "privatekey";
+        public static final String COLUMN_REPORT_ID = "report_id";
+    }
 }

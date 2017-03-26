@@ -84,7 +84,7 @@ public class ReportTabFragment extends Fragment {
             }
         });
 
-        BackgroundJob job = new BackgroundJob();
+        //BackgroundJob job = new BackgroundJob();
         //job.execute("abc");
 
         return v;

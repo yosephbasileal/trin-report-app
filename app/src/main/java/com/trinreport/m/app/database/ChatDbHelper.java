@@ -29,11 +29,20 @@ public class ChatDbHelper extends SQLiteOpenHelper {
                     ChatDbContract.MessageEntry.COLUMN_IS_ADMIN + " TEXT," +
                     ChatDbContract.MessageEntry.COLUMN_TIMESTAMP + " TEXT)";
 
+    private static final String SQL_CREATE_KEYS =
+            "CREATE TABLE " + ChatDbContract.KeyEntry.TABLE_NAME + " (" +
+                    ChatDbContract.KeyEntry._ID + " INTEGER PRIMARY KEY," +
+                    ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY + " TEXT," +
+                    ChatDbContract.KeyEntry.COLUMN_REPORT_ID + " TEXT)";
+
     private static final String SQL_DELETE_MESSAGES =
-            "DROP TABLE IF EXISTS " + ChatDbContract.ThreadEntry.TABLE_NAME;
+            "DROP TABLE IF EXISTS " + ChatDbContract.MessageEntry.TABLE_NAME;
 
     private static final String SQL_DELETE_THREADS =
-            "DROP TABLE IF EXISTS " + ChatDbContract.MessageEntry.TABLE_NAME;
+            "DROP TABLE IF EXISTS " + ChatDbContract.ThreadEntry.TABLE_NAME;
+
+    private static final String SQL_DELETE_KEYS =
+            "DROP TABLE IF EXISTS " + ChatDbContract.KeyEntry.TABLE_NAME;
 
     public ChatDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -41,13 +50,26 @@ public class ChatDbHelper extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_THREADS);
         db.execSQL(SQL_CREATE_MESSAGES);
+        db.execSQL(SQL_CREATE_KEYS);
     }
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This database is only a cache for online data, so its upgrade policy is
         // to simply to discard the data and start over
         db.execSQL(SQL_DELETE_THREADS);
         db.execSQL(SQL_DELETE_MESSAGES);
+        db.execSQL(SQL_DELETE_KEYS);
         onCreate(db);
+    }
+
+    public void deleteThreads(SQLiteDatabase db) {
+        db.execSQL(SQL_DELETE_THREADS);
+        db.execSQL(SQL_DELETE_MESSAGES);
+        db.execSQL(SQL_CREATE_THREADS);
+        db.execSQL(SQL_CREATE_MESSAGES);
+    }
+    public void deleteKeys(SQLiteDatabase db) {
+        db.execSQL(SQL_DELETE_KEYS);
+        db.execSQL(SQL_CREATE_KEYS);
     }
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
