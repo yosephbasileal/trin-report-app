@@ -22,6 +22,7 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -54,6 +55,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -62,6 +64,8 @@ import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -71,6 +75,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 
 import cz.msebera.android.httpclient.HttpEntity;
 import cz.msebera.android.httpclient.HttpResponse;
@@ -187,7 +198,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         });
 
         // initialize tor client
-        initTor();
+        //initTor();
 
         // update time
         updateDate();
@@ -637,11 +648,43 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData.put("userid", prefs.getString("userid", ""));
 
 
+                //// test encrypted image uplaod
+                Bitmap bitmap = BitmapFactory.decodeFile(mImagePathList.get(1));
+                String image = getStringImage(bitmap);
+                
+                try {
+                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                    SecureRandom random = new SecureRandom();
+                    byte[] keyBytes = generateKey(random);
+                    byte[] ivBytes = generateIV(cipher, random);
+                    SecretKey key = new SecretKeySpec(keyBytes, "AES");
+                    String cipherImage = encryptAES(cipher, key, ivBytes, image);
+                    String key_str = Base64.encodeToString(keyBytes, Base64.DEFAULT);
+                    String iv_str = Base64.encodeToString(ivBytes, Base64.DEFAULT);
+
+                    MyData.put("image", cipherImage);
+                    MyData.put("image_key", key_str);
+                    MyData.put("image_iv", iv_str);
+                } catch (Exception e ) {
+
+                }
+
+
+                ///// end test
                 return MyData;
             }
         };
 
         MyRequestQueue.add(MyStringRequest);
+    }
+
+    // source: https://www.simplifiedcoding.net/android-volley-tutorial-to-upload-image-to-server/
+    public String getStringImage(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
     }
 
     public HttpClient getNewHttpClient() {
@@ -870,5 +913,50 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             sb.append(hex);
         }
         return sb.toString();
+    }
+
+    private byte[] generateKey(SecureRandom random) {
+        try {
+            String password  = "password";
+            int iterationCount = 1000;
+            int keyLength = 256;
+            int saltLength = keyLength / 8; // same size as key output
+            byte[] salt = new byte[saltLength];
+            random.nextBytes(salt);
+            KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt,
+                    iterationCount, keyLength);
+            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+            byte[] keyBytes = keyFactory.generateSecret(keySpec).getEncoded();
+
+            return keyBytes;
+        } catch(Exception e) {
+
+        }
+        return null;
+    }
+
+    private byte[] generateIV(Cipher cipher, SecureRandom random) {
+        try  {
+            byte[] iv = new byte[cipher.getBlockSize()];
+            random.nextBytes(iv);
+            IvParameterSpec ivParams = new IvParameterSpec(iv);
+            return iv;
+        } catch (Exception e) {
+
+        }
+        return null;
+    }
+
+    private String encryptAES(Cipher cipher, SecretKey key, byte[] iv, String plaintext) {
+        try {
+            IvParameterSpec ivParams = new IvParameterSpec(iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key, ivParams);
+            byte[] encodedBytes = Base64.encode(cipher.doFinal(plaintext.getBytes("UTF-8")), Base64.DEFAULT);
+            String cipherText = new String(encodedBytes, "UTF-8");
+            return cipherText;
+        } catch (Exception e) {
+
+        }
+        return null;
     }
 }
