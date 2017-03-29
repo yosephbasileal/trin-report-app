@@ -21,9 +21,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
 
 import org.json.JSONException;
@@ -48,7 +48,6 @@ public class EmergencyTabFragment extends Fragment {
     private Location mLocation;
     private GPSTracker mGpsTracker;
     private SharedPreferences mSharedPrefs;
-    private String mAdminPublicKey;
 
     /**
      * Factory method to create a new instance of this fragment
@@ -69,7 +68,6 @@ public class EmergencyTabFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
 
         // initialize gps tracker
@@ -98,16 +96,6 @@ public class EmergencyTabFragment extends Fragment {
         });
 
         return v;
-    }
-
-    private void startEmergencyActivity(String report_id) {
-        Intent i = new Intent(getActivity(), Emergency.class);
-        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
-        startActivity(i);
-    }
-
-    private String encrypt(String plain) throws Exception {
-        return RSA.encrypt(plain, mAdminPublicKey);
     }
 
     private void notifyEmergency() {
@@ -148,28 +136,32 @@ public class EmergencyTabFragment extends Fragment {
                 String name = mSharedPrefs.getString("username", "");
                 String phone = mSharedPrefs.getString("userphone", "");
                 String userid = mSharedPrefs.getString("userid", "");
+                String email = mSharedPrefs.getString("useremail", "");
+                String dorm = mSharedPrefs.getString("userdorm", "");
                 String longitude = String.valueOf(mLocation.getLongitude());
                 String latitude = String.valueOf(mLocation.getLatitude());
-                String explanation = "N/A"; // to be added later
-
+                String explanation = "N/A"; // to be sent later from Emergecy activity
 
                 // encrypt data
-                /*try {
-                    name = encrypt(name);
-                    phone = encrypt(phone);
-                    userid = encrypt(userid);
-                    //longitude = encrypt(longitude);
-                    //latitude = encrypt(latitude);
-                    explanation = encrypt(explanation);
-
+                try {
+                    name = ApplicationContext.getInstance().encryptForAdmin(name);
+                    phone = ApplicationContext.getInstance().encryptForAdmin(phone);
+                    userid = ApplicationContext.getInstance().encryptForAdmin(userid);
+                    email = ApplicationContext.getInstance().encryptForAdmin(email);
+                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
-                }*/
+                }
 
                 // add data to hashmap
                 MyData.put("username", name);
                 MyData.put("userphone", phone);
                 MyData.put("userid", userid);
+                MyData.put("useremail", email);
+                MyData.put("userdorm", dorm);
                 MyData.put("longitude", longitude);
                 MyData.put("latitude", latitude);
                 MyData.put("explanation", explanation);
@@ -180,5 +172,11 @@ public class EmergencyTabFragment extends Fragment {
 
         // add to queue
         requestQueue.add(stringRequest);
+    }
+
+    private void startEmergencyActivity(String report_id) {
+        Intent i = new Intent(getActivity(), Emergency.class);
+        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
+        startActivity(i);
     }
 }

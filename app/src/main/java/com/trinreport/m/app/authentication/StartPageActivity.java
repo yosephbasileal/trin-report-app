@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
 
@@ -34,24 +35,26 @@ public class StartPageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // save context in singleton class
+        //ApplicationContext.getInstance().init(getApplicationContext());
 
         // check if user is authenticated (uses a boolean stored in shared prefs)
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+/*        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         boolean authenticated = mSharedPref.getBoolean("authenticated", false);
         if (authenticated) {
             // if user is authenticated, doesn't render this page, goes to main activity
             Intent i = new Intent(this, MainActivity.class);
             startActivity(i);
             return;
-        }
+        }*/
 
         // initialize list for storing reports
-        List<String> reports = new ArrayList<>();
+/*        List<String> reports = new ArrayList<>();
         Set<String> reportsSet = new HashSet<>(reports);
         PreferenceManager.getDefaultSharedPreferences(this)
                 .edit()
                 .putStringSet("reports_set", reportsSet)
-                .apply();
+                .apply();*/
 
         // inflate layout
         setContentView(R.layout.activity_start_page);
