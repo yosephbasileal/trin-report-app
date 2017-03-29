@@ -6,7 +6,16 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CALL_PHONE" />
+
     <user-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="true" />
+
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="18" />
 
     <application
         android:allowBackup="true"
@@ -15,9 +24,10 @@
         android:largeHeap="true"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".authentication.StartPageActivity">
+        <activity android:name=".authentication.StartPageActivity" android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
@@ -32,16 +42,23 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".report.AddReportActivity"
-            android:screenOrientation="portrait" />
-
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="stateHidden"
+            />
         <activity
             android:name=".emergency.Emergency"
             android:parentActivityName=".MainActivity"
-            android:screenOrientation="portrait"/>
+            android:screenOrientation="portrait" />
 
         <service
             android:name=".emergency.EmergencyStatusService"
-            android:exported="false"></service>
+            android:exported="false" />
+
+        <activity android:name=".followup.FollowupChatActivity"
+            android:windowSoftInputMode="stateHidden"
+            android:screenOrientation="portrait">
+
+        </activity>
     </application>
 
 </manifest>

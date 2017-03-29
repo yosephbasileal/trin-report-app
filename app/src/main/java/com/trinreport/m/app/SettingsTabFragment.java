@@ -6,6 +6,8 @@ import android.app.Fragment;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -14,6 +16,7 @@ import android.preference.PreferenceManager;
  */
 public class SettingsTabFragment extends PreferenceFragment
         implements Preference.OnPreferenceChangeListener {
+
 
     /**
      * Factory method to create a new instance of
@@ -39,6 +42,8 @@ public class SettingsTabFragment extends PreferenceFragment
         bindPreferenceSummaryToValue(findPreference("username"));
         bindPreferenceSummaryToValue(findPreference("userphone"));
         bindPreferenceSummaryToValue(findPreference("userid"));
+        bindPreferenceSummaryToValue(findPreference("useremail"));
+        bindPreferenceSummaryToValue(findPreference("userdorm"));
 
     }
 

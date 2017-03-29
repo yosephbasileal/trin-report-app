@@ -27,6 +27,8 @@ public class DatePickerFragment extends DialogFragment {
 
     private DatePicker mDatePicker;
 
+    private OnCompleteDateListener mListener;
+
     public static DatePickerFragment newInstance(Date date) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_DATE, date);
@@ -68,13 +70,30 @@ public class DatePickerFragment extends DialogFragment {
     }
 
     private void sendResult(int resultCode, Date date) {
-        if(getTargetFragment() == null) {
+        this.mListener.onCompleteDate(date);
+        /*if(getTargetFragment() == null) {
             return;
         }
         Intent intent = new Intent();
         intent.putExtra(EXTRA_DATE, date);
 
         getTargetFragment()
-                .onActivityResult(getTargetRequestCode(), resultCode, intent);
+                .onActivityResult(getTargetRequestCode(), resultCode, intent);*/
+    }
+
+    // make sure the Activity implemented it
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try {
+            this.mListener = (OnCompleteDateListener)activity;
+        }
+        catch (final ClassCastException e) {
+            throw new ClassCastException(activity.toString() + " must implement OnCompleteListener");
+        }
+    }
+
+    public static interface OnCompleteDateListener {
+        public abstract void onCompleteDate(Date date);
     }
 }

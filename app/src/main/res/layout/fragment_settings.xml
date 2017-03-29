@@ -1,27 +1,46 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_height="match_parent"
     tools:context="com.trinreport.m.app.SettingsTabFragment">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-        <PreferenceCategory android:title="Personal Information">
-            <EditTextPreference
-                android:title="Name"
-                android:key="username"
-                android:singleLine="true"
-                android:inputType="text" />
+            <android.support.v7.widget.Toolbar
+                android:id="@+id/toolbar_settings"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:background="@color/colorActionBar"
+                app:theme="@style/ThemeOverlay.AppCompat.Light"
+                android:layout_alignParentTop="true">
+            </android.support.v7.widget.Toolbar>
 
-            <EditTextPreference
-                android:title="Phone Number"
-                android:key="userphone"
-                android:singleLine="true"
-                android:inputType="phone"/>
+            <PreferenceCategory android:title="Personal Information">
+                <EditTextPreference
+                    android:title="Name"
+                    android:key="username"
+                    android:singleLine="true"
+                    android:inputType="text" />
 
-            <EditTextPreference
-                android:title="Trinity ID"
-                android:key="userid"
-                android:singleLine="true"
-                android:inputType="number" />
-        </PreferenceCategory>
+                <EditTextPreference
+                    android:title="Phone Number"
+                    android:key="userphone"
+                    android:singleLine="true"
+                    android:inputType="phone"/>
+
+                <EditTextPreference
+                    android:title="Trinity ID"
+                    android:key="userid"
+                    android:singleLine="true"
+                    android:inputType="number" />
+            </PreferenceCategory>
+
+        </LinearLayout>
+
+
+
 
 </FrameLayout>

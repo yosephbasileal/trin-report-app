@@ -11,6 +11,11 @@ import android.widget.Button;
 import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /**
  * This is the very initial page an authenticated user sees
  * after they download the app
@@ -39,6 +44,14 @@ public class StartPageActivity extends AppCompatActivity {
             startActivity(i);
             return;
         }
+
+        // initialize list for storing reports
+        List<String> reports = new ArrayList<>();
+        Set<String> reportsSet = new HashSet<>(reports);
+        PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putStringSet("reports_set", reportsSet)
+                .apply();
 
         // inflate layout
         setContentView(R.layout.activity_start_page);

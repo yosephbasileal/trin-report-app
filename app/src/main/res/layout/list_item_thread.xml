@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:gravity="center_vertical"
+    android:layout_height="?android:attr/listPreferredItemHeight"
+    android:id="@+id/list_item_thread"
+    android:layout_marginRight="8dp">
+
+    <!--
+    android:background="@drawable/touch_selector"-->
+
+    <FrameLayout
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:id="@+id/thread_icon">
+
+        <ImageView
+            android:id="@+id/list_item_icon"
+            android:layout_gravity="center"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/avatar2"/>
+
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_height="wrap_content"
+        android:layout_width="wrap_content"
+        android:orientation="vertical"
+        android:layout_toRightOf="@+id/thread_icon"
+        android:layout_toLeftOf="@+id/timestamp">
+
+        <TextView
+            android:id="@+id/list_item_title_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:textSize="20sp"
+            android:layout_gravity="fill"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+
+        <TextView
+            android:id="@+id/list_item_last_message_textview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"
+            android:layout_gravity="fill"
+            android:ellipsize="end"
+            android:maxLines="1"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:orientation="vertical"
+        android:layout_alignParentRight="true"
+        android:id="@+id/timestamp">
+
+        <TextView
+            android:id="@+id/list_item_high_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceLarge"/>
+
+        <TextView
+            android:id="@+id/list_item_low_textview"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:fontFamily="sans-serif-condensed"
+            android:textAppearance="?android:textAppearanceSmall"/>
+    </LinearLayout>
+</RelativeLayout>

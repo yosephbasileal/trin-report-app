@@ -4,7 +4,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.trinreport.m.app.emergency.EmergencyTabFragment"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:layout_marginTop="50dp">
 
     <LinearLayout
         android:layout_width="match_parent"

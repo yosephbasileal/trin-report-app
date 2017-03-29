@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_followup_chat"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.trinreport.m.app.followup.FollowupChatActivity">
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar_chat"
+        android:layout_width="match_parent"
+        android:paddingRight="8dp"
+        android:layout_height="56dp"
+        android:background="@color/colorActionBar"
+        app:theme="@style/ThemeOverlay.AppCompat.Light"
+        android:layout_alignParentTop="true">
+    </android.support.v7.widget.Toolbar>
+
+    <LinearLayout
+        android:id="@+id/form"
+        android:background="@drawable/border"
+        android:paddingRight="16dp"
+        android:layout_marginBottom="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:weightSum="3"
+        android:gravity="center">
+
+        <EditText
+            android:id="@+id/msg"
+            android:background="@android:color/transparent"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:hint="Enter a message"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="3"
+            android:maxLength="240"/>
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:padding="6dp">
+
+            <ImageButton
+                android:id="@+id/send"
+                android:layout_width="35dp"
+                android:layout_height="35dp"
+                android:text="Send"
+                android:src="@drawable/send"
+                android:scaleType="fitCenter"
+                android:background="@android:color/transparent"
+                />
+        </FrameLayout>
+    </LinearLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/msgview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:background="@null"
+        android:stackFromBottom="true"
+        android:transcriptMode="alwaysScroll"
+        android:layout_above="@id/form"
+        android:layout_below="@id/toolbar_chat">
+    </android.support.v7.widget.RecyclerView>
+
+</RelativeLayout>
