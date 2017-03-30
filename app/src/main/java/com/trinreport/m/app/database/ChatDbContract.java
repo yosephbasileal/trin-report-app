@@ -34,5 +34,6 @@ public class ChatDbContract {
         public static final String TABLE_NAME = "keys";
         public static final String COLUMN_PRIVATE_KEY = "privatekey";
         public static final String COLUMN_REPORT_ID = "report_id";
+        public static final String COLUMN_REPORT_TITLE = "title";
     }
 }

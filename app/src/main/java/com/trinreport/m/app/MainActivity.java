@@ -26,8 +26,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // save context in singleton class
-        ApplicationContext.getInstance().init(getApplicationContext());
 
         // check if user has already authenticated using their trinity email
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
@@ -36,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
             // redirect to authentication start page
             startStartPageActivity();
         }
+
+        // save context in singleton class
+        ApplicationContext.getInstance().init(getApplicationContext());
 
         // if authenticated, render main page activity
         setContentView(R.layout.activity_main);

@@ -130,7 +130,8 @@ public class FollowupTabFragment extends Fragment {
         super.onResume();
         // updates threads data from server
         //getFollowUpThreads();
-        new GetThreadList2().execute();
+        //new GetThreadList2().execute();
+        updateThreadsList();
     }
 
     private List<String> getReportIds() {
@@ -295,74 +296,7 @@ public class FollowupTabFragment extends Fragment {
     }
 
 
-    private void getFollowUpThread(final String reportId) {
-        // get url
-        String url = URL.GET_FOLLOW_UP_THREAD;
 
-        // create request
-        RequestQueue requestQueue = Volley.newRequestQueue(getActivity());
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Volley Sucess: " + response);
-                try {
-                    // get report id assigned by authentication server
-                    JSONObject jsonobject = new JSONObject(response);
-
-                    Boolean initiated = jsonobject.getBoolean("initiated");
-                    if(!initiated) { // follow up thread not initiated
-                        return;
-                    }
-
-                    jsonobject = jsonobject.getJSONObject("thread");
-                    Log.d(TAG, "JsonObject: " + jsonobject);
-
-                    String title = jsonobject.getString("title");
-                    String last_updated = jsonobject.getString("last_updated");
-                    String last_message = jsonobject.getString("last_message");
-                    String report_id = jsonobject.getString("report_id");
-
-                    Thread thread = new Thread(last_message, last_updated, report_id, title);
-                    ChatBook.getChatBook(getActivity()).deleteThread(reportId);
-                    ChatBook.getChatBook(getActivity()).addThread(thread);
-
-                    JSONArray jsonarray = jsonobject.getJSONArray("messages");
-                    for (int j = 0; j < jsonarray.length(); j++) {
-                        JSONObject jsonobject2 = jsonarray.getJSONObject(j);
-                        String timestamp = jsonobject2.getString("timestamp");
-                        String content = jsonobject2.getString("content");
-                        String from_admin = jsonobject2.getInt("from_admin") + "";
-
-                        ChatMessage message = new ChatMessage(from_admin, content, timestamp, report_id);
-                        ChatBook.getChatBook(getActivity()).addMessage(message);
-                    }
-
-                    updateThreadsList();
-
-                } catch (JSONException e) {
-                    Log.d(TAG, "JSONException: " + e.toString());
-                }
-            }
-        }, new Response.ErrorListener() { //listener to handle errors
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "Volley Error: " + error.toString());
-                Toast.makeText(getActivity(), "Connection failed! Try again.",
-                        Toast.LENGTH_LONG).show();
-            }
-        }) {
-            protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap<>();
-
-                MyData.put("report_id", reportId);
-
-                return MyData;
-            }
-        };
-
-        // add to queue
-        requestQueue.add(stringRequest);
-    }
 
     /**
      * Async task for gets thread list in the background
@@ -385,28 +319,6 @@ public class FollowupTabFragment extends Fragment {
         }
     }
 
-    /**
-     * Async task for gets thread list in the background
-     */
-    private class GetThreadList2 extends
-            AsyncTask<Void, String, ArrayList<ChatKey>> {
 
-        @Override
-        protected ArrayList<ChatKey> doInBackground(Void... params) {
-            ChatBook book = ChatBook.getChatBook(getActivity());
-            ArrayList<ChatKey> keys = book.getKeys();
-            return keys;
-        }
-
-        @Override
-        protected void onPostExecute(ArrayList<ChatKey> result) {
-            super.onPostExecute(result);
-            Log.d(TAG, "reports " + result.toString());
-            for(int i = 0; i < result.size(); i++) {
-                getFollowUpThread(result.get(i).getReportId());
-                updateThreadsList();
-            }
-        }
-    }
 
 }

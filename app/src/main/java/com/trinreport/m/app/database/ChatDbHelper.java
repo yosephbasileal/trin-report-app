@@ -33,7 +33,8 @@ public class ChatDbHelper extends SQLiteOpenHelper {
             "CREATE TABLE " + ChatDbContract.KeyEntry.TABLE_NAME + " (" +
                     ChatDbContract.KeyEntry._ID + " INTEGER PRIMARY KEY," +
                     ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY + " TEXT," +
-                    ChatDbContract.KeyEntry.COLUMN_REPORT_ID + " TEXT)";
+                    ChatDbContract.KeyEntry.COLUMN_REPORT_ID + " TEXT," +
+                    ChatDbContract.KeyEntry.COLUMN_REPORT_TITLE + " TEXT)";
 
     private static final String SQL_DELETE_MESSAGES =
             "DROP TABLE IF EXISTS " + ChatDbContract.MessageEntry.TABLE_NAME;
@@ -47,11 +48,15 @@ public class ChatDbHelper extends SQLiteOpenHelper {
     public ChatDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
+
+    @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL(SQL_CREATE_THREADS);
         db.execSQL(SQL_CREATE_MESSAGES);
         db.execSQL(SQL_CREATE_KEYS);
     }
+
+    @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This database is only a cache for online data, so its upgrade policy is
         // to simply to discard the data and start over

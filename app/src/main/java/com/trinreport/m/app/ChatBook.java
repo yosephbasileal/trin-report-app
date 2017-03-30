@@ -112,6 +112,7 @@ public class ChatBook {
         ContentValues values = new ContentValues();
         values.put(ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY, key.getPrvKey());
         values.put(ChatDbContract.KeyEntry.COLUMN_REPORT_ID, key.getReportId());
+        values.put(ChatDbContract.KeyEntry.COLUMN_REPORT_TITLE, key.getTitle());
         return values;
     }
 
@@ -188,6 +189,7 @@ public class ChatBook {
      * @return cursor wrapper object
      */
     private ChatDbCursorWrapper queryThreads(String whereClause, String[] whereArgs) {
+        String orderBy = ChatDbContract.ThreadEntry.COLUMN_LAST_UPDATED + " DESC";
         Cursor cursor = mDatabase.query(
                 ChatDbContract.ThreadEntry.TABLE_NAME,
                 null, //all column
@@ -195,7 +197,7 @@ public class ChatBook {
                 whereArgs,
                 null, //group by
                 null, //having
-                null //order by
+                orderBy //order by
         );
         return new ChatDbCursorWrapper(cursor);
     }

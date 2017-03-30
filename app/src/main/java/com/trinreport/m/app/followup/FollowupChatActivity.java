@@ -23,6 +23,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
@@ -225,61 +226,6 @@ public class FollowupChatActivity extends AppCompatActivity {
         }
     }
 
-    private void getFollowUpMessages() {
-        // get url
-        String url = URL.GET_FOLLOW_UP_MESSAGES;
-
-        // create request
-        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Volley Sucess: " + response);
-                try {
-                    // get report id assigned by authentication server
-                    JSONObject jsonObj = new JSONObject(response);
-                    Log.d(TAG, "JsonObject: " + jsonObj);
-                    JSONArray jsonarray = jsonObj.getJSONArray("messages");
-                    Log.d(TAG, "JsonArray: " + jsonarray);
-
-                    //mRecyclerView.setRecycledViewPool(new RecyclerView.RecycledViewPool());
-                    //mRecyclerView.removeAllViewsInLayout();
-                    mMessagesList.clear();
-                    for (int i = 0; i < jsonarray.length(); i++) {
-                        JSONObject jsonobject = jsonarray.getJSONObject(i);
-                        String timestamp = jsonobject.getString("timestamp");
-                        String content = jsonobject.getString("content");
-                        String from_admin = jsonobject.getInt("from_admin") + "";
-
-                        ChatMessage message = new ChatMessage(from_admin, content, timestamp, mThreadId);
-                        mMessagesList.add(message);
-                        mAdapter.notifyDataSetChanged();
-                    }
-
-                } catch (JSONException e) {
-                    Log.d(TAG, "JSONException: " + e.toString());
-                }
-            }
-        }, new Response.ErrorListener() { //listener to handle errors
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "Volley Error: " + error.toString());
-                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
-                        Toast.LENGTH_LONG).show();
-            }
-        }) {
-            protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap<>();
-                MyData.put("thread_id", mThreadId);
-
-                return MyData;
-            }
-        };
-
-        // add to queue
-        requestQueue.add(stringRequest);
-    }
-
     private void sendMessage(final String message) {
         // get url
         String url = URL.SEND_FOLLOW_UP_MESSAGE;
@@ -312,6 +258,8 @@ public class FollowupChatActivity extends AppCompatActivity {
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
                 }
+
+                ApplicationContext.getInstance().updateThreadsFromServer();
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override

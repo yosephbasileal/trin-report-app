@@ -47,9 +47,10 @@ public class ChatDbCursorWrapper extends CursorWrapper {
         // get values from databse
         String prv_key = getString(getColumnIndex(ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY));
         String report_id = getString(getColumnIndex(ChatDbContract.KeyEntry.COLUMN_REPORT_ID));
+        String title = getString(getColumnIndex(ChatDbContract.KeyEntry.COLUMN_REPORT_TITLE));
 
         // create the object and set all the values
-        ChatKey key = new ChatKey(report_id, prv_key);
+        ChatKey key = new ChatKey(report_id, prv_key, title);
         return key;
     }
 }
