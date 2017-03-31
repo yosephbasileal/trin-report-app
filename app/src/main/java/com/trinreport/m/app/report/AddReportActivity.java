@@ -50,7 +50,7 @@ import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
-import com.trinreport.m.app.model.ChatKey;
+import com.trinreport.m.app.model.Report;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
@@ -105,7 +105,6 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
     // constants
     private static final String TAG = "AddReportFragment";
-
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
 
@@ -128,11 +127,9 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private Button mSubmitbutton;
     private RecyclerView mPhotoRecyclerView;
     private RecyclerView.Adapter mAdapter;
-    LinearLayoutManager mLayoutManager;
-    private List<String> mImagePathList;
-    private String mCurrentPhotoPath;
+    private LinearLayoutManager mLayoutManager;
 
-    // Form inputs
+    // form inputs
     private String mUrgency;
     private Date mDate;
     private String mLocation;
@@ -142,6 +139,9 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private boolean mFollowupEnabled;
     private boolean mResEmployeeChecked;
 
+    // other references
+    private List<String> mImagePathList;
+    private String mCurrentPhotoPath;
     private SharedPreferences mSharedPreferences;
     private String mAdminPublicKey;
 
@@ -159,7 +159,6 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mIsAnonymous = false;
         mFollowupEnabled = true;
         mResEmployeeChecked = false;
-
         mTorInitialized = false;
     }
 
@@ -558,6 +557,18 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData = populateReporterData(MyData, false);
                 MyData = populateKeys(MyData);
 
+                // save in local db
+                ChatBook.getChatBook(getApplicationContext()).addReport(
+                    new Report(MyData.get("report_id"),
+                        MyData.get("private_key"),
+                        mType,
+                        MyData.get("public_key"),
+                        System.currentTimeMillis())
+                );
+
+                // remove public key from data to be sent to server
+                MyData.remove("private_key");
+
 
                 //// test encrypted image uplaod
 /*                Bitmap bitmap = BitmapFactory.decodeFile(mImagePathList.get(1));
@@ -624,19 +635,19 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
     private Map<String, String> populateReporterData(Map<String, String> data, boolean isAnon) {
         // create variables
-        String name = "";
-        String phone = "";
-        String userid = "";
-        String email = "";
-        String dorm = "";
+        String name = "n/a";
+        String phone = "n/a";
+        String userid = "n/a";
+        String email = "n/a";
+        String dorm = "n/a";
 
         if(!isAnon) {
             // get user data from shared preferences
-            name = mSharedPreferences.getString("username", "");
-            phone = mSharedPreferences.getString("userphone", "");
-            userid = mSharedPreferences.getString("userid", "");
-            email = mSharedPreferences.getString("useremail", "");
-            dorm = mSharedPreferences.getString("userdorm", "");
+            name = mSharedPreferences.getString("username", "n/a");
+            phone = mSharedPreferences.getString("userphone", "n/a");
+            userid = mSharedPreferences.getString("userid", "n/a");
+            email = mSharedPreferences.getString("useremail", "n/a");
+            dorm = mSharedPreferences.getString("userdorm", "n/a");
         }
 
         // encrypt data
@@ -668,12 +679,10 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
             String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
 
-            // generate cookie and store locally
+            // generate cookie
             String reportId = generateCookie();
-            ChatBook.getChatBook(getApplicationContext()).addChatKey(
-                    new ChatKey(reportId, privateKeyPem, mType)
-            );
             data.put("public_key", publicKeyPem);
+            data.put("private_key", privateKeyPem);
             data.put("report_id", reportId);
         } catch (Exception e) {
             e.printStackTrace();
@@ -704,6 +713,18 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData = populateReportData(MyData);
                 MyData = populateReporterData(MyData, true);
                 MyData = populateKeys(MyData);
+
+                // save in local db
+                ChatBook.getChatBook(getApplicationContext()).addReport(
+                    new Report(MyData.get("report_id"),
+                        MyData.get("private_key"),
+                        mType,
+                        MyData.get("public_key"),
+                        System.currentTimeMillis())
+                );
+
+                // remove public key from data to be sent to server
+                MyData.remove("private_key");
 
                 // convert hashmap to json object
                 JSONObject holder = new JSONObject(MyData);

@@ -13,37 +13,28 @@ public class ChatDbHelper extends SQLiteOpenHelper {
     public static final int DATABASE_VERSION = 1;
     public static final String DATABASE_NAME = "Chat.db";
 
-    private static final String SQL_CREATE_THREADS =
-            "CREATE TABLE " + ChatDbContract.ThreadEntry.TABLE_NAME + " (" +
-                    ChatDbContract.ThreadEntry._ID + " INTEGER PRIMARY KEY," +
-                    ChatDbContract.ThreadEntry.COLUMN_THREAD_ID + " TEXT," +
-                    ChatDbContract.ThreadEntry.COLUMN_TITLE + " TEXT," +
-                    ChatDbContract.ThreadEntry.COLUMN_LAST_MESSAGE + " TEXT," +
-                    ChatDbContract.ThreadEntry.COLUMN_LAST_UPDATED + " TEXT)";
-
     private static final String SQL_CREATE_MESSAGES =
             "CREATE TABLE " + ChatDbContract.MessageEntry.TABLE_NAME + " (" +
                     ChatDbContract.MessageEntry._ID + " INTEGER PRIMARY KEY," +
-                    ChatDbContract.MessageEntry.COLUMN_THREAD_ID + " TEXT," +
+                    ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " TEXT," +
                     ChatDbContract.MessageEntry.COLUMN_MESSAGE + " TEXT," +
                     ChatDbContract.MessageEntry.COLUMN_IS_ADMIN + " TEXT," +
                     ChatDbContract.MessageEntry.COLUMN_TIMESTAMP + " TEXT)";
 
-    private static final String SQL_CREATE_KEYS =
-            "CREATE TABLE " + ChatDbContract.KeyEntry.TABLE_NAME + " (" +
-                    ChatDbContract.KeyEntry._ID + " INTEGER PRIMARY KEY," +
-                    ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY + " TEXT," +
-                    ChatDbContract.KeyEntry.COLUMN_REPORT_ID + " TEXT," +
-                    ChatDbContract.KeyEntry.COLUMN_REPORT_TITLE + " TEXT)";
+    private static final String SQL_CREATE_REPORTS =
+            "CREATE TABLE " + ChatDbContract.ReportEntry.TABLE_NAME + " (" +
+                    ChatDbContract.ReportEntry._ID + " INTEGER PRIMARY KEY," +
+                    ChatDbContract.ReportEntry.COLUMN_PRIVATE_KEY + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_REPORT_TITLE + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_DATE_CREATED + " INTEGER)";
 
     private static final String SQL_DELETE_MESSAGES =
             "DROP TABLE IF EXISTS " + ChatDbContract.MessageEntry.TABLE_NAME;
 
-    private static final String SQL_DELETE_THREADS =
-            "DROP TABLE IF EXISTS " + ChatDbContract.ThreadEntry.TABLE_NAME;
-
-    private static final String SQL_DELETE_KEYS =
-            "DROP TABLE IF EXISTS " + ChatDbContract.KeyEntry.TABLE_NAME;
+    private static final String SQL_DELETE_REPORTS =
+            "DROP TABLE IF EXISTS " + ChatDbContract.ReportEntry.TABLE_NAME;
 
     public ChatDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -51,31 +42,24 @@ public class ChatDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        db.execSQL(SQL_CREATE_THREADS);
         db.execSQL(SQL_CREATE_MESSAGES);
-        db.execSQL(SQL_CREATE_KEYS);
+        db.execSQL(SQL_CREATE_REPORTS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // This database is only a cache for online data, so its upgrade policy is
         // to simply to discard the data and start over
-        db.execSQL(SQL_DELETE_THREADS);
         db.execSQL(SQL_DELETE_MESSAGES);
-        db.execSQL(SQL_DELETE_KEYS);
+        db.execSQL(SQL_DELETE_REPORTS);
         onCreate(db);
     }
 
-    public void deleteThreads(SQLiteDatabase db) {
-        db.execSQL(SQL_DELETE_THREADS);
+    public void deleteMessages(SQLiteDatabase db) {
         db.execSQL(SQL_DELETE_MESSAGES);
-        db.execSQL(SQL_CREATE_THREADS);
         db.execSQL(SQL_CREATE_MESSAGES);
     }
-    public void deleteKeys(SQLiteDatabase db) {
-        db.execSQL(SQL_DELETE_KEYS);
-        db.execSQL(SQL_CREATE_KEYS);
-    }
+
     public void onDowngrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         onUpgrade(db, oldVersion, newVersion);
     }

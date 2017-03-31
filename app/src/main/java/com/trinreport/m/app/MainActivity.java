@@ -35,9 +35,6 @@ public class MainActivity extends AppCompatActivity {
             startStartPageActivity();
         }
 
-        // save context in singleton class
-        ApplicationContext.getInstance().init(getApplicationContext());
-
         // if authenticated, render main page activity
         setContentView(R.layout.activity_main);
 
@@ -75,6 +72,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // save context in singleton class
+        ApplicationContext.getInstance().init(this);
     }
 
     private void startStartPageActivity() {

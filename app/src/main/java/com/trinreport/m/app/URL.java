@@ -27,8 +27,6 @@ public class URL {
     public static String SEND_REPORT_ANON = RDDP_SERVER_DOMAIN + "/report-anonymous";
 
     // followup urls
-    public static String GET_FOLLOW_UP_THREAD = RDDP_SERVER_DOMAIN + "/api/app/get-report-thread";
-    public static String GET_FOLLOW_UP_THREADS = RDDP_SERVER_DOMAIN + "/get-followup-threads";
-    public static String GET_FOLLOW_UP_MESSAGES = RDDP_SERVER_DOMAIN + "/get-followup-messages";
-    public static String SEND_FOLLOW_UP_MESSAGE = RDDP_SERVER_DOMAIN + "/send-followup-message";
+    public static String GET_FOLLOW_UP_MESSAGES = RDDP_SERVER_DOMAIN + "/api/app/report-followup-messages";
+    public static String SEND_FOLLOW_UP_MESSAGE = RDDP_SERVER_DOMAIN + "/api/app/add-new-message";
 }

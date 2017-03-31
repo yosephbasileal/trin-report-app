@@ -28,6 +28,7 @@ import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
 import com.trinreport.m.app.model.ChatMessage;
+import com.trinreport.m.app.model.Report;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -43,13 +44,12 @@ public class FollowupChatActivity extends AppCompatActivity {
 
     private static final String TAG = "FollowupChatActivity";
 
-    public static final String EXTRA_THREAD_ID = "com.trinreport.m.app.extra.REPORT_ID2";
+    public static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORT_ID2";
     public static final String EXTRA_THREAD_TITLE = "com.trinreport.m.app.extra_THREAD_TITLE";
 
     private static final int VIEW_TYPE_LEFT = 0;
     private static final int VIEW_TYPE_RIGHT = 1;
 
-    private ChatArrayAdapter mChatArrayAdapter;
     private ListView mListView;
     private EditText mChatText;
     private ImageButton mButtonSend;
@@ -62,8 +62,9 @@ public class FollowupChatActivity extends AppCompatActivity {
     private Toolbar mToolbar;
 
     private List<ChatMessage> mMessagesList = new ArrayList<>();
-    private String mThreadId;
-    private String mThreadTitle;
+    private String mReportId;
+    private Report mReport;
+    private String mReportTitle;
 
 
     @Override
@@ -72,8 +73,12 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_followup_chat);
 
-        mThreadId = getIntent().getStringExtra(EXTRA_THREAD_ID);
-        mThreadTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
+        mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
+        mReportTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
+
+        getMessages();
+
+        mReport = ChatBook.getChatBook(this).getReport(mReportId);
 
         mButtonSend = (ImageButton) findViewById(R.id.send);
 
@@ -81,7 +86,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
-            getSupportActionBar().setTitle(mThreadTitle);
+            getSupportActionBar().setTitle(mReportTitle);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
@@ -140,19 +145,20 @@ public class FollowupChatActivity extends AppCompatActivity {
     }
 
     private boolean sendChatMessage() {
+        // send to server
         String content = mChatText.getText().toString();
-        Log.d(TAG, content);
-        sendMessage(content); // send to server
+        sendMessage(content); 
+        // add to list
         String fromAdmin = "0";
         String timestamp = new Date().toString();
-        ChatMessage message = new ChatMessage(fromAdmin, content, timestamp, mThreadId);
+        ChatMessage message = new ChatMessage(fromAdmin, content, timestamp, mReportId);
         mMessagesList.add(message);
+        // save to local db
         ChatBook.getChatBook(this).addMessage(message);
         updateMessagesList();
-
-        //mMessagesList.add(new ChatMessage(fromAdmin, message, timestamp, mThreadId));
-        //mAdapter.notifyDataSetChanged();
+        // reset edit text
         mChatText.setText("");
+        // scroll to bottom of screen
         mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
         return true;
     }
@@ -226,40 +232,42 @@ public class FollowupChatActivity extends AppCompatActivity {
         }
     }
 
-    private void sendMessage(final String message) {
+    private void getMessages() {
         // get url
-        String url = URL.SEND_FOLLOW_UP_MESSAGE;
+        String url = URL.GET_FOLLOW_UP_MESSAGES;
 
         // create request
-        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
         StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
                 try {
-                    // get report id assigned by authentication server
+                    // get json object
                     JSONObject jsonObj = new JSONObject(response);
-                    /*Log.d(TAG, "JsonObject: " + jsonObj);
+                    
+                    // get json array of messages
                     JSONArray jsonarray = jsonObj.getJSONArray("messages");
-                    Log.d(TAG, "JsonArray: " + jsonarray);
 
-                    for (int i = 0; i < jsonarray.length(); i++) {
-                        JSONObject jsonobject = jsonarray.getJSONObject(i);
-                        String timestamp = jsonobject.getString("timestamp");
-                        String content = jsonobject.getString("content");
-                        boolean from_admin = (jsonobject.getInt("from_admin") != 0);
+                    ChatBook.getChatBook(getApplicationContext()).deleteMessages(mReportId);
 
-                        ChatMessage message = new ChatMessage(from_admin, content, new Date());
-                        mMessagesList.add(message);
-                        mAdapter.notifyDataSetChanged();
+                    for (int j = 0; j < jsonarray.length(); j++) {
+                        JSONObject m = jsonarray.getJSONObject(j);
+                        String timestamp = m.getString("timestamp");
+                        String content = m.getString("content");
+                        String from_admin = m.getInt("from_admin") + "";
 
-                    }*/
+                        // decrypt message
+                        String prvKey = mReport.getPrvKey();
+                        content = ApplicationContext.getInstance().decryptForUser(content, prvKey);
 
-                } catch (JSONException e) {
-                    Log.d(TAG, "JSONException: " + e.toString());
+                        ChatMessage message = new ChatMessage(from_admin, content, timestamp, mReportId);
+                        ChatBook.getChatBook(getApplicationContext()).addMessage(message);
+                    }
+                    updateMessagesList();
+                } catch (Exception e) {
+                    Log.d(TAG, "Exception: " + e.toString());
                 }
-
-                ApplicationContext.getInstance().updateThreadsFromServer();
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override
@@ -271,8 +279,51 @@ public class FollowupChatActivity extends AppCompatActivity {
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap<>();
-                MyData.put("message", message);
-                MyData.put("thread_id", mThreadId);
+
+                MyData.put("report_id", mReportId);
+
+                return MyData;
+            }
+        };
+
+        // add to queue
+        requestQueue.add(stringRequest);
+    }
+
+    private void sendMessage(final String message) {
+        // get url
+        String url = URL.SEND_FOLLOW_UP_MESSAGE;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d(TAG, "Volley Sucess: " + response);
+            }
+        }, new Response.ErrorListener() { //listener to handle errors
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }) {
+            protected Map<String, String> getParams() {
+                Map<String, String> MyData = new HashMap<>();
+
+                String user_public_key_pem = mReport.getPubKey();
+
+                try {
+                    String message_user = ApplicationContext.getInstance().encryptForUser(message, user_public_key_pem);
+                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message);
+                    MyData.put("message_user", message_user);
+                    MyData.put("message_admin", message_admin);
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+
+                MyData.put("report_id", mReportId);
 
                 return MyData;
             }
@@ -291,7 +342,7 @@ public class FollowupChatActivity extends AppCompatActivity {
         @Override
         protected ArrayList<ChatMessage> doInBackground(Void... params) {
             ChatBook book = ChatBook.getChatBook(getApplicationContext());
-            ArrayList<ChatMessage> messages = book.getMessages(mThreadId);
+            ArrayList<ChatMessage> messages = book.getMessages(mReportId);
             return messages;
         }
 

@@ -133,11 +133,11 @@ public class EmergencyTabFragment extends Fragment {
                 Map<String, String> MyData = new HashMap<>();
 
                 // get user data from shared preferences
-                String name = mSharedPrefs.getString("username", "");
-                String phone = mSharedPrefs.getString("userphone", "");
-                String userid = mSharedPrefs.getString("userid", "");
-                String email = mSharedPrefs.getString("useremail", "");
-                String dorm = mSharedPrefs.getString("userdorm", "");
+                String name = mSharedPrefs.getString("username", "n/a");
+                String phone = mSharedPrefs.getString("userphone", "n/a");
+                String userid = mSharedPrefs.getString("userid", "n/a");
+                String email = mSharedPrefs.getString("useremail", "n/a");
+                String dorm = mSharedPrefs.getString("userdorm", "n/a");
                 String longitude = String.valueOf(mLocation.getLongitude());
                 String latitude = String.valueOf(mLocation.getLatitude());
                 String explanation = "N/A"; // to be sent later from Emergecy activity
