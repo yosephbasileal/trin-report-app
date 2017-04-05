@@ -78,6 +78,8 @@ public class Emergency extends AppCompatActivity {
     private Boolean mReceieved = false;
     private Boolean mCanCallMe = true;
 
+    private String mAdminPublicKey;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -87,6 +89,8 @@ public class Emergency extends AppCompatActivity {
 
         mGpsTracker = new GPSTracker(ApplicationContext.get());
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
 
         // get references
         mToolbar = (Toolbar) findViewById(R.id.toolbar_emergency);
@@ -266,7 +270,7 @@ public class Emergency extends AppCompatActivity {
 
                 // encrypt data
                 try {
-                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
@@ -350,8 +354,8 @@ public class Emergency extends AppCompatActivity {
 
                 // encrypt data
                 try {
-                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude);
-                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());

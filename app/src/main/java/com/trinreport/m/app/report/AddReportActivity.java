@@ -180,6 +180,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mSubmitbutton = (Button) findViewById(R.id.button_submit);
 
         mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
         mAdminPublicKey = mSharedPreferences.getString("admin_public_key", "");
 
 
@@ -202,8 +203,6 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
         // update time
         updateDate();
-
-        ApplicationContext.getInstance().initTor();
 
         // setup list, adapter and recyclerview for selected images
         mImagePathList = new ArrayList<>();
@@ -558,17 +557,48 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData = populateKeys(MyData);
 
                 // save in local db
+                String is_anon ="0";
                 ChatBook.getChatBook(getApplicationContext()).addReport(
                     new Report(MyData.get("report_id"),
                         MyData.get("private_key"),
                         mType,
                         MyData.get("public_key"),
-                        System.currentTimeMillis())
+                        System.currentTimeMillis(), is_anon)
                 );
 
                 // remove public key from data to be sent to server
                 MyData.remove("private_key");
 
+
+                // image upload, allows only 3
+                int imageCount = mImagePathList.size() - 1;
+                if (imageCount > 3) {
+                    imageCount = 3;
+                }
+                MyData.put("images_count", imageCount+"");
+                if(imageCount > 0) {
+                    try {
+                        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+                        SecureRandom random = new SecureRandom();
+                        byte[] keyBytes = generateKey(random);
+                        byte[] ivBytes = generateIV(cipher, random);
+
+                        for(int i = 1; i <= imageCount; i++) {
+                            String path = mImagePathList.get(i);
+                            Bitmap bitmap = BitmapFactory.decodeFile(path);
+                            String image_str = getStringImage(bitmap);
+                            SecretKey key = new SecretKeySpec(keyBytes, "AES");
+                            String cipherImage = encryptAES(cipher, key, ivBytes, image_str);
+                            MyData.put("image"+i, cipherImage);
+                        }
+                        String key_str = Base64.encodeToString(keyBytes, Base64.DEFAULT);
+                        String iv_str = Base64.encodeToString(ivBytes, Base64.DEFAULT);
+                        MyData.put("images_key", key_str);
+                        MyData.put("images_iv", iv_str);
+                    } catch (Exception e ) {
+                        e.printStackTrace();
+                    }
+                }
 
                 //// test encrypted image uplaod
 /*                Bitmap bitmap = BitmapFactory.decodeFile(mImagePathList.get(1));
@@ -612,10 +642,10 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
         // encrypt data
         try {
-            urgency = ApplicationContext.getInstance().encryptForAdmin(mUrgency);
-            type = ApplicationContext.getInstance().encryptForAdmin(mType);
-            location = ApplicationContext.getInstance().encryptForAdmin(mLocation);
-            description = ApplicationContext.getInstance().encryptForAdmin(mDescription);
+            urgency = ApplicationContext.getInstance().encryptForAdmin(mUrgency, mAdminPublicKey);
+            type = ApplicationContext.getInstance().encryptForAdmin(mType, mAdminPublicKey);
+            location = ApplicationContext.getInstance().encryptForAdmin(mLocation, mAdminPublicKey);
+            description = ApplicationContext.getInstance().encryptForAdmin(mDescription, mAdminPublicKey);
         } catch (Exception e) {
             Log.d(TAG, "Encryption error: " + e.getMessage());
         }
@@ -652,11 +682,11 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
         // encrypt data
         try {
-            name = ApplicationContext.getInstance().encryptForAdmin(name);
-            phone = ApplicationContext.getInstance().encryptForAdmin(phone);
-            userid = ApplicationContext.getInstance().encryptForAdmin(userid);
-            email = ApplicationContext.getInstance().encryptForAdmin(email);
-            dorm = ApplicationContext.getInstance().encryptForAdmin(dorm);
+            name = ApplicationContext.getInstance().encryptForAdmin(name, mAdminPublicKey);
+            phone = ApplicationContext.getInstance().encryptForAdmin(phone, mAdminPublicKey);
+            userid = ApplicationContext.getInstance().encryptForAdmin(userid, mAdminPublicKey);
+            email = ApplicationContext.getInstance().encryptForAdmin(email, mAdminPublicKey);
+            dorm = ApplicationContext.getInstance().encryptForAdmin(dorm, mAdminPublicKey);
         } catch (Exception e) {
             Log.d(TAG, "Encryption error: " + e.getMessage());
             e.printStackTrace();
@@ -715,12 +745,13 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 MyData = populateKeys(MyData);
 
                 // save in local db
+                String is_anon ="1";
                 ChatBook.getChatBook(getApplicationContext()).addReport(
                     new Report(MyData.get("report_id"),
                         MyData.get("private_key"),
                         mType,
                         MyData.get("public_key"),
-                        System.currentTimeMillis())
+                        System.currentTimeMillis(), is_anon)
                 );
 
                 // remove public key from data to be sent to server
@@ -883,5 +914,14 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
         }
         return null;
+    }
+
+    // source: https://www.simplifiedcoding.net/android-volley-tutorial-to-upload-image-to-server/
+    public String getStringImage(Bitmap bmp){
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+        byte[] imageBytes = baos.toByteArray();
+        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+        return encodedImage;
     }
 }

@@ -33,6 +33,7 @@ public class MainActivity extends AppCompatActivity {
         if (!authenticated) {
             // redirect to authentication start page
             startStartPageActivity();
+            return;
         }
 
         // if authenticated, render main page activity
@@ -46,7 +47,8 @@ public class MainActivity extends AppCompatActivity {
         frag_settings = SettingsTabFragment.newInstance();
 
         // initially show emergency button tab
-        fm.beginTransaction().add(R.id.main_activity_container, frag_emergency).commit();
+        if(!frag_emergency.isAdded())
+            fm.beginTransaction().add(R.id.main_activity_container, frag_emergency).commit();
 
         // bottom bar to switch between four tabs
         bottomBar = (BottomBar) findViewById(R.id.bottomBar);

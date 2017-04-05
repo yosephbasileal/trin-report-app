@@ -37,9 +37,10 @@ public class ChatDbCursorWrapper extends CursorWrapper {
         String title = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_REPORT_TITLE));
         String pub_key = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY));
         long date_created = getLong(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_DATE_CREATED));
+        String is_anon = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_IS_ANON));
 
         // create the object and set all the values
-        Report report = new Report(report_id, prv_key, title, pub_key, date_created);
+        Report report = new Report(report_id, prv_key, title, pub_key, date_created, is_anon);
         return report;
     }
 }

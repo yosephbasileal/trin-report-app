@@ -29,15 +29,14 @@ import cz.msebera.android.httpclient.ssl.SSLContexts;
 public class ApplicationContext {
 
     private Context appContext;
-    private String mAdminPublicKey;
 
     // tor client
     private HttpClient mHttpclient;
     private boolean mTorInitialized;
+    private boolean mInitializing;
     private HttpClientContext mHttpContext;
 
     private ApplicationContext(){
-
     }
 
     public void init(Context context){
@@ -46,9 +45,8 @@ public class ApplicationContext {
             Log.d("TAG", "Application context initilized");
             appContext = context;
 
-            // get reference to admin public key
-            SharedPreferences mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(appContext);
-            mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
+            // initialize tor
+            mTorInitialized = false;
         }
     }
 
@@ -68,8 +66,8 @@ public class ApplicationContext {
                 instance;
     }
 
-    public String encryptForAdmin(String plain) throws Exception {
-        return RSA.encrypt(plain, mAdminPublicKey);
+    public String encryptForAdmin(String plain, String pubKey) throws Exception {
+        return RSA.encrypt(plain, pubKey);
     }
 
     public String encryptForUser(String plain, String pubKey) throws Exception {
@@ -82,8 +80,10 @@ public class ApplicationContext {
 
     //-----------------------tor----------------------//
     public void initTor() {
-        InitializeTor job = new InitializeTor();
-        job.execute();
+        if(!mInitializing) {
+            InitializeTor job = new InitializeTor();
+            job.execute();
+        }
     }
 
     public boolean isTorReady() {
@@ -102,6 +102,7 @@ public class ApplicationContext {
 
         @Override
         protected String doInBackground(String[] params) {
+            mInitializing = true;
 
             OnionProxyManager onionProxyManager = new AndroidOnionProxyManager(appContext, "torr");
 
@@ -125,6 +126,7 @@ public class ApplicationContext {
                 mHttpContext.setAttribute("socks.address", socksaddr);
 
                 mTorInitialized = true;
+                mInitializing = false;
 
             }
             catch (Exception e) {

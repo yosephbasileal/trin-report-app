@@ -2,6 +2,7 @@ package com.trinreport.m.app.report;
 
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
@@ -54,6 +55,17 @@ import cz.msebera.android.httpclient.ssl.SSLContexts;
  */
 public class ReportTabFragment extends Fragment {
 
+    private static final String CS_PHONE_NUMBER = "8602972222";
+    private static final String T9_PHONE_NUMBER = "8602972222";
+    private static final String HC_PHONE_NUMBER = "8602972222";
+    private static final String CC_PHONE_NUMBER = "8602972222";
+
+    private Button mAddReportButton;
+    private Button mCallCsSafetyButton;
+    private Button mCallCounselingCentButton;
+    private Button mCallTitleNineButton;
+    private Button mCallHealthCenterButton;
+
     /**
      * Factory method to create a new instance of
      * this fragment using the provided parameters.
@@ -75,8 +87,13 @@ public class ReportTabFragment extends Fragment {
         // Inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_report_tab, container, false);
 
-        Button addReportButton = (Button) v.findViewById(R.id.add_report_button);
-        addReportButton.setOnClickListener(new View.OnClickListener() {
+        mAddReportButton = (Button) v.findViewById(R.id.add_report_button);
+        mCallCsSafetyButton = (Button) v.findViewById(R.id.call_campus_safety);
+        mCallCounselingCentButton = (Button) v.findViewById(R.id.call_counselling_center);
+        mCallTitleNineButton = (Button) v.findViewById(R.id.call_title_9);
+        mCallHealthCenterButton = (Button) v.findViewById(R.id.call_health_center);
+
+        mAddReportButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i = new Intent(getActivity(), AddReportActivity.class);
@@ -86,6 +103,66 @@ public class ReportTabFragment extends Fragment {
 
         //BackgroundJob job = new BackgroundJob();
         //job.execute("abc");
+
+        // button for calling campus safety office
+        mCallCsSafetyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL,
+                        Uri.parse("tel: " + CS_PHONE_NUMBER));
+                try {
+                    startActivity(intent);
+                }
+                catch (SecurityException e) {
+
+                }
+            }
+        });
+
+        // button for calling counseling center
+        mCallCounselingCentButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL,
+                        Uri.parse("tel: " + CC_PHONE_NUMBER));
+                try {
+                    startActivity(intent);
+                }
+                catch (SecurityException e) {
+
+                }
+            }
+        });
+
+        // button for calling title IX office
+        mCallTitleNineButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL,
+                        Uri.parse("tel: " + T9_PHONE_NUMBER));
+                try {
+                    startActivity(intent);
+                }
+                catch (SecurityException e) {
+
+                }
+            }
+        });
+
+        // button for calling health center
+        mCallHealthCenterButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(Intent.ACTION_CALL,
+                        Uri.parse("tel: " + HC_PHONE_NUMBER));
+                try {
+                    startActivity(intent);
+                }
+                catch (SecurityException e) {
+
+                }
+            }
+        });
 
         return v;
     }

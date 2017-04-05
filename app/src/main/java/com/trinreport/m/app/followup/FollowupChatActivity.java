@@ -1,7 +1,9 @@
 package com.trinreport.m.app.followup;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,11 +36,22 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import cz.msebera.android.httpclient.HttpEntity;
+import cz.msebera.android.httpclient.HttpResponse;
+import cz.msebera.android.httpclient.client.HttpClient;
+import cz.msebera.android.httpclient.client.methods.HttpPost;
+import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
+import cz.msebera.android.httpclient.entity.StringEntity;
 
 public class FollowupChatActivity extends AppCompatActivity {
 
@@ -66,12 +79,23 @@ public class FollowupChatActivity extends AppCompatActivity {
     private Report mReport;
     private String mReportTitle;
 
+    SharedPreferences mSharedPref;
+    private String mAdminPublicKey;
+
+    // tor client
+    private HttpClient mHttpclient;
+    private boolean mTorInitialized;
+    private HttpClientContext mHttpContext;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_followup_chat);
+
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        mAdminPublicKey = mSharedPref.getString("admin_public_key", "");
 
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
         mReportTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
@@ -147,7 +171,12 @@ public class FollowupChatActivity extends AppCompatActivity {
     private boolean sendChatMessage() {
         // send to server
         String content = mChatText.getText().toString();
-        sendMessage(content); 
+        if(!mReport.isAnon()) {
+            sendMessage(content);
+        } else {
+            sendMessageThroughTor(content);
+        }
+
         // add to list
         String fromAdmin = "0";
         String timestamp = new Date().toString();
@@ -232,6 +261,28 @@ public class FollowupChatActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Async task for gets thread list in the background
+     */
+    private class GetMessageList extends
+            AsyncTask<Void, String, ArrayList<ChatMessage>> {
+
+        @Override
+        protected ArrayList<ChatMessage> doInBackground(Void... params) {
+            ChatBook book = ChatBook.getChatBook(getApplicationContext());
+            ArrayList<ChatMessage> messages = book.getMessages(mReportId);
+            return messages;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<ChatMessage> result) {
+            super.onPostExecute(result);
+            mMessagesList = result;
+            mAdapter.notifyDataSetChanged();
+            mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
+        }
+    }
+
     private void getMessages() {
         // get url
         String url = URL.GET_FOLLOW_UP_MESSAGES;
@@ -290,6 +341,11 @@ public class FollowupChatActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
+    private void sendMessageThroughTor(String message) {
+        MessageThroughTor job = new MessageThroughTor();
+        job.execute();
+    }
+
     private void sendMessage(final String message) {
         // get url
         String url = URL.SEND_FOLLOW_UP_MESSAGE;
@@ -316,7 +372,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
                 try {
                     String message_user = ApplicationContext.getInstance().encryptForUser(message, user_public_key_pem);
-                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message);
+                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message, mAdminPublicKey);
                     MyData.put("message_user", message_user);
                     MyData.put("message_admin", message_admin);
                 } catch (Exception e) {
@@ -333,25 +389,117 @@ public class FollowupChatActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
-    /**
-     * Async task for gets thread list in the background
+    private class MessageThroughTor extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String[] params) {
+            try {
+                mTorInitialized = ApplicationContext.getInstance().isTorReady();
+                mHttpclient = ApplicationContext.getInstance().getTorClient();
+                mHttpContext = ApplicationContext.getInstance().getTorContext();
+
+                // wait if not tor initilized yet
+                while(!mTorInitialized) {
+                    Thread.sleep(90);
+                    mTorInitialized = ApplicationContext.getInstance().isTorReady();
+                }
+                // get URL
+                HttpPost httpost = new HttpPost(URL.SEND_FOLLOW_UP_MESSAGE);
+
+                Map<String, String> MyData = new HashMap<>();
+
+                String message = params[0];
+                String user_public_key_pem = mReport.getPubKey();
+
+                try {
+                    String message_user = ApplicationContext.getInstance().encryptForUser(message, user_public_key_pem);
+                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message, mAdminPublicKey);
+                    MyData.put("message_user", message_user);
+                    MyData.put("message_admin", message_admin);
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+
+                MyData.put("report_id", mReportId);
+
+                // convert hashmap to json object
+                JSONObject holder = new JSONObject(MyData);
+
+                // pass results to a string builder
+                StringEntity se = new StringEntity(holder.toString());
+
+                // set the post request as the resulting string
+                httpost.setEntity(se);
+
+                // set request headers
+                httpost.setHeader("Accept", "application/json");
+                httpost.setHeader("Content-type", "application/json");
+
+                // handle reponse
+                HttpResponse response;
+                response = mHttpclient.execute(httpost, mHttpContext);
+                // Examine the response status
+                Log.i("TorTest", response.getStatusLine().toString());
+                // Get hold of the response entity
+                HttpEntity entity = response.getEntity();
+                // If the response does not enclose an entity, there is no need
+                // to worry about connection release
+                if (entity != null) {
+
+                    // A Simple JSON Response Read
+                    InputStream instream = entity.getContent();
+                    String result= convertStreamToString(instream);
+
+                    // get report id assigned by authentication server
+                    JSONObject jsonObj = new JSONObject(result);
+                    String report_id = jsonObj.get("report_id").toString();
+
+
+                    Log.d("TorTest", "Result: " + result);
+                    // now you have the string representation of the HTML request
+                    instream.close();
+                }
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
+            }
+
+            return "some message";
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            //process message
+        }
+    }
+
+    // source: http://stackoverflow.com/questions/4457492/how-do-i-use-the-simple-http-client-in-android
+    private static String convertStreamToString(InputStream is) {
+    /*
+     * To convert the InputStream to String we use the BufferedReader.readLine()
+     * method. We iterate until the BufferedReader return null which means
+     * there's no more data to read. Each line will appended to a StringBuilder
+     * and returned as String.
      */
-    private class GetMessageList extends
-            AsyncTask<Void, String, ArrayList<ChatMessage>> {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        StringBuilder sb = new StringBuilder();
 
-        @Override
-        protected ArrayList<ChatMessage> doInBackground(Void... params) {
-            ChatBook book = ChatBook.getChatBook(getApplicationContext());
-            ArrayList<ChatMessage> messages = book.getMessages(mReportId);
-            return messages;
+        String line = null;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                is.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-
-        @Override
-        protected void onPostExecute(ArrayList<ChatMessage> result) {
-            super.onPostExecute(result);
-            mMessagesList = result;
-            mAdapter.notifyDataSetChanged();
-            mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
-        }
+        return sb.toString();
     }
 }

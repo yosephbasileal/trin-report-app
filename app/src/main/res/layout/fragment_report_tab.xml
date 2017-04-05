@@ -30,7 +30,7 @@
                     android:background="@color/colorPrimary"
                     android:textColor="@color/colorAccent"
                     android:textStyle="bold"
-                    android:id="@+id/bottomLeftOuter"
+                    android:id="@+id/call_campus_safety"
                     android:layout_width="110dp"
                     android:layout_height="110dp"
                     android:adjustViewBounds="true"
@@ -41,7 +41,7 @@
                 </Button>
 
                 <Button
-                    android:id="@+id/topRightOuter"
+                    android:id="@+id/call_health_center"
                     android:layout_width="110dp"
                     android:layout_height="110dp"
                     android:adjustViewBounds="true"
@@ -60,7 +60,7 @@
                 android:gravity="center">
 
                 <Button
-                    android:id="@+id/bottomRightOuter"
+                    android:id="@+id/call_counselling_center"
                     android:layout_width="110dp"
                     android:layout_height="110dp"
                     android:adjustViewBounds="true"
@@ -73,7 +73,7 @@
                 </Button>
 
                 <Button
-                    android:id="@+id/topLeftOuter"
+                    android:id="@+id/call_title_9"
                     android:layout_width="110dp"
                     android:layout_height="110dp"
                     android:adjustViewBounds="true"

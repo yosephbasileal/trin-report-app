@@ -48,6 +48,7 @@ public class EmergencyTabFragment extends Fragment {
     private Location mLocation;
     private GPSTracker mGpsTracker;
     private SharedPreferences mSharedPrefs;
+    private String mAdminPublicKey;
 
     /**
      * Factory method to create a new instance of this fragment
@@ -70,10 +71,17 @@ public class EmergencyTabFragment extends Fragment {
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
 
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
+
         // initialize gps tracker
         mGpsTracker = new GPSTracker(getActivity());
         if(!mGpsTracker.canGetLocation()) {
             mGpsTracker.showSettingsAlert();
+        }
+
+        // initialize tor
+        if(!ApplicationContext.getInstance().isTorReady()) {
+            ApplicationContext.getInstance().initTor();
         }
 
         // add emergency button event lisetner
@@ -144,14 +152,14 @@ public class EmergencyTabFragment extends Fragment {
 
                 // encrypt data
                 try {
-                    name = ApplicationContext.getInstance().encryptForAdmin(name);
-                    phone = ApplicationContext.getInstance().encryptForAdmin(phone);
-                    userid = ApplicationContext.getInstance().encryptForAdmin(userid);
-                    email = ApplicationContext.getInstance().encryptForAdmin(email);
-                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm);
-                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude);
-                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude);
-                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation);
+                    name = ApplicationContext.getInstance().encryptForAdmin(name, mAdminPublicKey);
+                    phone = ApplicationContext.getInstance().encryptForAdmin(phone, mAdminPublicKey);
+                    userid = ApplicationContext.getInstance().encryptForAdmin(userid, mAdminPublicKey);
+                    email = ApplicationContext.getInstance().encryptForAdmin(email, mAdminPublicKey);
+                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm, mAdminPublicKey);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
                 }
