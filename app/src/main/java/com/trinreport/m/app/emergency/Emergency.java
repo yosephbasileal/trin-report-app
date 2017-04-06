@@ -105,7 +105,7 @@ public class Emergency extends AppCompatActivity {
         // setup toolbar
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle("Emergency");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }

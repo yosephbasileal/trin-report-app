@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,12 +26,16 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
+import com.msopentech.thali.toronionproxy.OnionProxyManager;
 import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
 import com.trinreport.m.app.model.ChatMessage;
 import com.trinreport.m.app.model.Report;
+import com.trinreport.m.app.tor.MyConnectionSocketFactory;
+import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -40,6 +45,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -51,7 +57,13 @@ import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.client.HttpClient;
 import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
+import cz.msebera.android.httpclient.config.Registry;
+import cz.msebera.android.httpclient.config.RegistryBuilder;
+import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
 import cz.msebera.android.httpclient.entity.StringEntity;
+import cz.msebera.android.httpclient.impl.client.HttpClients;
+import cz.msebera.android.httpclient.impl.conn.PoolingHttpClientConnectionManager;
+import cz.msebera.android.httpclient.ssl.SSLContexts;
 
 public class FollowupChatActivity extends AppCompatActivity {
 
@@ -73,6 +85,8 @@ public class FollowupChatActivity extends AppCompatActivity {
     private RecyclerView.Adapter mAdapter;
 
     private Toolbar mToolbar;
+    private TextView mNotice;
+    private LinearLayout mForm;
 
     private List<ChatMessage> mMessagesList = new ArrayList<>();
     private String mReportId;
@@ -94,17 +108,14 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_followup_chat);
 
-        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-        mAdminPublicKey = mSharedPref.getString("admin_public_key", "");
-
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
         mReportTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
-
-        getMessages();
-
         mReport = ChatBook.getChatBook(this).getReport(mReportId);
 
-        mButtonSend = (ImageButton) findViewById(R.id.send);
+        Log.d(TAG, "Report: " + mReport.toString());
+
+        mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+        mAdminPublicKey = mSharedPref.getString("admin_public_key", "");
 
         mToolbar = (Toolbar) findViewById(R.id.toolbar_chat);
 
@@ -122,18 +133,38 @@ public class FollowupChatActivity extends AppCompatActivity {
             }
         });
 
-/*        mListView = (ListView) findViewById(R.id.msgview);
-        mChatArrayAdapter = new ChatArrayAdapter(getApplicationContext(), R.layout.chat_view_right);
-        mListView.setAdapter(mChatArrayAdapter);*/
-
+        mNotice = (TextView) findViewById(R.id.chat_text_notice);
+        mButtonSend = (ImageButton) findViewById(R.id.send);
         mRecyclerView = (RecyclerView) findViewById(R.id.msgview);
+        mChatText = (EditText) findViewById(R.id.msg);
+        mForm = (LinearLayout) findViewById(R.id.form);
+
+
+        if(mReport.getStatus().equals("Failed to send")) {
+            mButtonSend.setVisibility(View.GONE);
+            mForm.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.GONE);
+            mNotice.setText("Your report was not sent successully. Try again!");
+            return;
+        }
+
+        if(mReport.getStatus().equals("Sending")) {
+            mButtonSend.setVisibility(View.GONE);
+            mForm.setVisibility(View.GONE);
+            mRecyclerView.setVisibility(View.GONE);
+            mNotice.setText("Your report is being processed to be sent. Check back later.");
+            return;
+        }
+
+
+        getMessages();
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new MessageAdapter();
         mRecyclerView.setAdapter(mAdapter);
         updateMessagesList();
 
-        mChatText = (EditText) findViewById(R.id.msg);
+
         mChatText.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -148,20 +179,6 @@ public class FollowupChatActivity extends AppCompatActivity {
                 sendChatMessage();
             }
         });
-
-        //getFollowUpMessages();
-
-/*        mListView.setTranscriptMode(AbsListView.TRANSCRIPT_MODE_ALWAYS_SCROLL);
-        mListView.setAdapter(mChatArrayAdapter);*/
-
-        //to scroll the list view to bottom on data change
-/*        mChatArrayAdapter.registerDataSetObserver(new DataSetObserver() {
-            @Override
-            public void onChanged() {
-                super.onChanged();
-                mListView.setSelection(mChatArrayAdapter.getCount() - 1);
-            }
-        });*/
     }
 
     private void updateMessagesList() {
@@ -280,6 +297,12 @@ public class FollowupChatActivity extends AppCompatActivity {
             mMessagesList = result;
             mAdapter.notifyDataSetChanged();
             mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
+
+            if(mMessagesList.size() == 0) {
+                mNotice.setText("No follow up messages. You can send message by writing below.");
+            } else {
+                mNotice.setText("");
+            }
         }
     }
 
@@ -341,6 +364,11 @@ public class FollowupChatActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
+    private void initTor() {
+        InitializeTor job = new InitializeTor();
+        job.execute();
+    }
+
     private void sendMessageThroughTor(String message) {
         MessageThroughTor job = new MessageThroughTor();
         job.execute();
@@ -394,14 +422,9 @@ public class FollowupChatActivity extends AppCompatActivity {
         @Override
         protected String doInBackground(String[] params) {
             try {
-                mTorInitialized = ApplicationContext.getInstance().isTorReady();
-                mHttpclient = ApplicationContext.getInstance().getTorClient();
-                mHttpContext = ApplicationContext.getInstance().getTorContext();
-
                 // wait if not tor initilized yet
                 while(!mTorInitialized) {
                     Thread.sleep(90);
-                    mTorInitialized = ApplicationContext.getInstance().isTorReady();
                 }
                 // get URL
                 HttpPost httpost = new HttpPost(URL.SEND_FOLLOW_UP_MESSAGE);
@@ -473,6 +496,60 @@ public class FollowupChatActivity extends AppCompatActivity {
         protected void onPostExecute(String message) {
             //process message
         }
+    }
+
+    private class InitializeTor extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String[] params) {
+
+            OnionProxyManager onionProxyManager = new AndroidOnionProxyManager(getApplicationContext(), "torr");
+
+            int totalSecondsPerTorStartup = 4 * 60;
+            int totalTriesPerTorStartup = 5;
+            try {
+                boolean ok = onionProxyManager.startWithRepeat(totalSecondsPerTorStartup, totalTriesPerTorStartup);
+                if (!ok)
+                    Log.e("TorTest", "Couldn't start Tor!");
+
+                while (!onionProxyManager.isRunning())
+                    Thread.sleep(90);
+
+                Log.v("TorTest", "Tor initialized on port " + onionProxyManager.getIPv4LocalHostSocksPort());
+
+
+                mHttpclient = getNewHttpClient();
+                int port = onionProxyManager.getIPv4LocalHostSocksPort();
+                InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", port);
+                mHttpContext = HttpClientContext.create();
+                mHttpContext.setAttribute("socks.address", socksaddr);
+
+                mTorInitialized = true;
+
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return "some message";
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            //process message
+        }
+    }
+
+    public HttpClient getNewHttpClient() {
+
+        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", new MyConnectionSocketFactory())
+                .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
+                .build();
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+        return HttpClients.custom()
+                .setConnectionManager(cm)
+                .build();
     }
 
     // source: http://stackoverflow.com/questions/4457492/how-do-i-use-the-simple-http-client-in-android

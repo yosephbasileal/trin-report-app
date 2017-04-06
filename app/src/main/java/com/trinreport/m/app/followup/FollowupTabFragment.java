@@ -15,6 +15,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -38,10 +39,12 @@ public class FollowupTabFragment extends Fragment {
 
     private List<Report> mReportsList;
     private Button mDeleteAllButton;
+    private Button mRefreshButton;
     private RecyclerView mThreadsRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private Toolbar mToolbar;
+    private TextView mNotice;
 
     private SharedPreferences mSharedPreferences;
 
@@ -75,14 +78,17 @@ public class FollowupTabFragment extends Fragment {
         //new GetReportList2().execute();
 
         // attach adpater to recycler view
-        mToolbar = (Toolbar) v.findViewById(R.id.toolbar_followup);
-        mDeleteAllButton = (Button) v.findViewById(R.id.delete_all_tables);
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        mNotice = (TextView) v.findViewById(R.id.followup_text_notice);
+        mDeleteAllButton = (Button) getActivity().findViewById(R.id.delete_all_tables);
+        mRefreshButton = (Button) getActivity().findViewById(R.id.refresh_followup);
         mThreadsRecyclerView = (RecyclerView) v.findViewById(R.id.listview_threads);
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mThreadsRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new FollowupTabFragment.ReportsAdapter();
         mThreadsRecyclerView.setAdapter(mAdapter);
         updateReportsList();
+
 
         // setup toolbar
         if (mToolbar != null) {
@@ -98,6 +104,13 @@ public class FollowupTabFragment extends Fragment {
             }
         });
 
+        mRefreshButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                updateReportsList();
+            }
+        });
+
         return v;
     }
 
@@ -107,8 +120,18 @@ public class FollowupTabFragment extends Fragment {
         // updates threads data from server
         //getFollowUpThreads();
         //new GetReportList2().execute();
+        mDeleteAllButton.setVisibility(View.VISIBLE);
+        mRefreshButton.setVisibility(View.VISIBLE);
         updateReportsList();
     }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mDeleteAllButton.setVisibility(View.GONE);
+        mRefreshButton.setVisibility(View.GONE);
+    }
+
 
     private void startFollowupChatActivity(String report, int position) {
         Intent i = new Intent(getActivity(), FollowupChatActivity.class);
@@ -126,7 +149,6 @@ public class FollowupTabFragment extends Fragment {
         private final ImageView iconView;
         private final TextView titleView;
         private final TextView messageView;
-        private final TextView highTextView;
         private final TextView lowTextView;
 
         public ReportHolder(View view) {
@@ -135,7 +157,6 @@ public class FollowupTabFragment extends Fragment {
             iconView = (ImageView) view.findViewById(R.id.list_item_icon);
             titleView = (TextView) view.findViewById(R.id.list_item_title_textview);
             messageView = (TextView) view.findViewById(R.id.list_item_last_message_textview);
-            highTextView = (TextView) view.findViewById(R.id.list_item_high_textview);
             lowTextView = (TextView) view.findViewById(R.id.list_item_low_textview);
         }
 
@@ -144,11 +165,11 @@ public class FollowupTabFragment extends Fragment {
 
             final Report report = mReportsList.get(Position);
             titleView.setText(report.getTitle());
-            messageView.setText("none, remove this");
+            messageView.setText("Status: " + report.getStatus());
 
             // TODO: convert date to friendly string
             //lowTextView.setText(thread.getNiceTimestamp());
-            lowTextView.setText("format date and print");
+            lowTextView.setText(report.getNiceTimestamp());
 
             mView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -206,6 +227,12 @@ public class FollowupTabFragment extends Fragment {
             super.onPostExecute(result);
             mReportsList = result;
             mAdapter.notifyDataSetChanged();
+
+            if(mReportsList.size() == 0) {
+                mNotice.setText("No reports to show.");
+            } else {
+                mNotice.setText("");
+            }
         }
     }
 }

@@ -6,6 +6,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -65,6 +67,7 @@ public class ReportTabFragment extends Fragment {
     private Button mCallCounselingCentButton;
     private Button mCallTitleNineButton;
     private Button mCallHealthCenterButton;
+    private Toolbar mToolbar;
 
     /**
      * Factory method to create a new instance of
@@ -92,6 +95,12 @@ public class ReportTabFragment extends Fragment {
         mCallCounselingCentButton = (Button) v.findViewById(R.id.call_counselling_center);
         mCallTitleNineButton = (Button) v.findViewById(R.id.call_title_9);
         mCallHealthCenterButton = (Button) v.findViewById(R.id.call_health_center);
+
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("");
+        }
 
         mAddReportButton.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,12 +45,14 @@ public class EmergencyTabFragment extends Fragment {
 
     // layout references
     private Button mEmergencyButton;
+    private Toolbar mToolbar;
 
     // other refernces
     private Location mLocation;
     private GPSTracker mGpsTracker;
     private SharedPreferences mSharedPrefs;
     private String mAdminPublicKey;
+
 
     /**
      * Factory method to create a new instance of this fragment
@@ -73,15 +77,16 @@ public class EmergencyTabFragment extends Fragment {
 
         mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
 
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("");
+        }
+
         // initialize gps tracker
         mGpsTracker = new GPSTracker(getActivity());
         if(!mGpsTracker.canGetLocation()) {
             mGpsTracker.showSettingsAlert();
-        }
-
-        // initialize tor
-        if(!ApplicationContext.getInstance().isTorReady()) {
-            ApplicationContext.getInstance().initTor();
         }
 
         // add emergency button event lisetner

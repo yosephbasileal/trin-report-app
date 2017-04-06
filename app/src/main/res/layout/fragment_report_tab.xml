@@ -2,8 +2,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:layout_marginTop="50dp">
+    android:orientation="vertical">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -16,7 +15,7 @@
             android:text="TAP TO CALL"
             android:textSize="14pt"
             android:gravity="center"
-            android:layout_marginBottom="15dp"
+            android:layout_marginBottom="12dp"
             />
         <LinearLayout
             android:layout_width="match_parent"
@@ -31,8 +30,8 @@
                     android:textColor="@color/colorAccent"
                     android:textStyle="bold"
                     android:id="@+id/call_campus_safety"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="105dp"
+                    android:layout_height="105dp"
                     android:adjustViewBounds="true"
                     android:clickable="true"
 
@@ -42,8 +41,8 @@
 
                 <Button
                     android:id="@+id/call_health_center"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="105dp"
+                    android:layout_height="105dp"
                     android:adjustViewBounds="true"
                     android:background="@color/colorPrimary"
                     android:textColor="@color/colorAccent"
@@ -61,8 +60,8 @@
 
                 <Button
                     android:id="@+id/call_counselling_center"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="105dp"
+                    android:layout_height="105dp"
                     android:adjustViewBounds="true"
                     android:background="@color/colorPrimary"
                     android:textColor="@color/colorAccent"
@@ -74,8 +73,8 @@
 
                 <Button
                     android:id="@+id/call_title_9"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="105dp"
+                    android:layout_height="105dp"
                     android:adjustViewBounds="true"
                     android:background="@color/colorPrimary"
                     android:textColor="@color/colorAccent"
@@ -96,7 +95,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/buttons_relative"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="12dp"
         android:text="OR"
         android:textSize="14pt"
         android:textColor="@color/colorPrimaryDark"/>
@@ -109,7 +108,7 @@
         android:text="Submit a Report"
         android:layout_below="@+id/or_textview"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="15dp"
+        android:layout_marginTop="12dp"
         android:background="@color/colorAccent"
         android:padding="10dp"
         />

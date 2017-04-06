@@ -29,5 +29,6 @@ public class ChatDbContract {
         public static final String COLUMN_PUBLIC_KEY = "publickey";
         public static final String COLUMN_DATE_CREATED = "date_created";
         public static final String COLUMN_IS_ANON = "is_anonymous";
+        public static final String COLUMN_STATUS = "status";
     }
 }

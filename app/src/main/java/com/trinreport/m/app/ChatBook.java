@@ -71,6 +71,13 @@ public class ChatBook {
         mDatabase.insert(ChatDbContract.ReportEntry.TABLE_NAME, null, values);
     }
 
+    public void updateReportStatus(String reportId, String status) {
+        ContentValues values = new ContentValues();
+        values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, status);
+        mDatabase.update(ChatDbContract.ReportEntry.TABLE_NAME, values, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
+    }
+
     /**
      * Gets content values of a message
      */
@@ -84,7 +91,7 @@ public class ChatBook {
     }
 
     /**
-     * Gets content values of a chat key
+     * Gets content values of a report
      */
     private static ContentValues getContentValues(Report report) {
         ContentValues values = new ContentValues();
@@ -93,11 +100,13 @@ public class ChatBook {
         values.put(ChatDbContract.ReportEntry.COLUMN_REPORT_TITLE, report.getTitle());
         values.put(ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY, report.getPubKey());
         values.put(ChatDbContract.ReportEntry.COLUMN_DATE_CREATED, report.getDateCreated());
+        values.put(ChatDbContract.ReportEntry.COLUMN_IS_ANON, report.getIsAnon());
+        values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, report.getStatus());
         return values;
     }
 
     /**
-     * Get all messages of a thread
+     * Get all messages of a report
      */
     public ArrayList<ChatMessage> getMessages(String reportId) {
         ArrayList<ChatMessage> messages = new ArrayList<>();

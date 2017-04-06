@@ -30,23 +30,14 @@ public class ApplicationContext {
 
     private Context appContext;
 
-    // tor client
-    private HttpClient mHttpclient;
-    private boolean mTorInitialized;
-    private boolean mInitializing;
-    private HttpClientContext mHttpContext;
-
     private ApplicationContext(){
     }
 
     public void init(Context context){
-        // initilize context
+        // initialize context
         if(appContext == null){
             Log.d("TAG", "Application context initilized");
             appContext = context;
-
-            // initialize tor
-            mTorInitialized = false;
         }
     }
 
@@ -77,81 +68,4 @@ public class ApplicationContext {
     public String decryptForUser(String cipher, String prvKey) throws Exception {
         return RSA.decrypt(cipher, prvKey);
     }
-
-    //-----------------------tor----------------------//
-    public void initTor() {
-        if(!mInitializing) {
-            InitializeTor job = new InitializeTor();
-            job.execute();
-        }
-    }
-
-    public boolean isTorReady() {
-        return mTorInitialized;
-    }
-
-    public HttpClient getTorClient() {
-        return mHttpclient;
-    }
-
-    public HttpClientContext getTorContext() {
-        return mHttpContext;
-    }
-
-    private class InitializeTor extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String[] params) {
-            mInitializing = true;
-
-            OnionProxyManager onionProxyManager = new AndroidOnionProxyManager(appContext, "torr");
-
-            int totalSecondsPerTorStartup = 4 * 60;
-            int totalTriesPerTorStartup = 5;
-            try {
-                boolean ok = onionProxyManager.startWithRepeat(totalSecondsPerTorStartup, totalTriesPerTorStartup);
-                if (!ok)
-                    Log.e("TorTest", "Couldn't start Tor!");
-
-                while (!onionProxyManager.isRunning())
-                    Thread.sleep(90);
-
-                Log.v("TorTest", "Tor initialized on port " + onionProxyManager.getIPv4LocalHostSocksPort());
-
-
-                mHttpclient = getNewHttpClient();
-                int port = onionProxyManager.getIPv4LocalHostSocksPort();
-                InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", port);
-                mHttpContext = HttpClientContext.create();
-                mHttpContext.setAttribute("socks.address", socksaddr);
-
-                mTorInitialized = true;
-                mInitializing = false;
-
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return "some message";
-        }
-
-        @Override
-        protected void onPostExecute(String message) {
-            //process message
-        }
-    }
-
-    public HttpClient getNewHttpClient() {
-
-        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", new MyConnectionSocketFactory())
-                .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
-                .build();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-        return HttpClients.custom()
-                .setConnectionManager(cm)
-                .build();
-    }
-    //-----------------------end tor----------------------//
 }

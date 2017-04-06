@@ -29,7 +29,9 @@ public class ChatDbHelper extends SQLiteOpenHelper {
                     ChatDbContract.ReportEntry.COLUMN_REPORT_TITLE + " TEXT," +
                     ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY + " TEXT," +
                     ChatDbContract.ReportEntry.COLUMN_DATE_CREATED + " INTEGER," +
-                    ChatDbContract.ReportEntry.COLUMN_IS_ANON + " TEXT)";
+                    ChatDbContract.ReportEntry.COLUMN_IS_ANON + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_STATUS + " TEXT)";
+
 
     private static final String SQL_DELETE_MESSAGES =
             "DROP TABLE IF EXISTS " + ChatDbContract.MessageEntry.TABLE_NAME;

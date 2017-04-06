@@ -1,9 +1,8 @@
 package com.trinreport.m.app.report;
 
 import android.annotation.SuppressLint;
-import android.app.Application;
-import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.content.CursorLoader;
@@ -23,8 +23,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.text.format.DateUtils;
-import android.util.Base64;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -35,71 +33,26 @@ import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioGroup;
-import android.widget.Toast;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
-import com.msopentech.thali.toronionproxy.OnionProxyManager;
-import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
-import com.trinreport.m.app.URL;
 import com.trinreport.m.app.model.Report;
-import com.trinreport.m.app.tor.MyConnectionSocketFactory;
-import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
 import java.security.KeyPair;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
-import java.security.spec.KeySpec;
 import java.text.DateFormat;
 import java.text.Format;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.SecretKeySpec;
-
-import cz.msebera.android.httpclient.HttpEntity;
-import cz.msebera.android.httpclient.HttpResponse;
 import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.methods.HttpPost;
 import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
-import cz.msebera.android.httpclient.config.Registry;
-import cz.msebera.android.httpclient.config.RegistryBuilder;
-import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
-import cz.msebera.android.httpclient.entity.StringEntity;
-import cz.msebera.android.httpclient.impl.client.HttpClients;
-import cz.msebera.android.httpclient.impl.conn.PoolingHttpClientConnectionManager;
-import cz.msebera.android.httpclient.ssl.SSLContexts;
+
 
 public class AddReportActivity extends AppCompatActivity implements  DatePickerFragment.OnCompleteDateListener, TimePickerFragment.OnCompleteTimeListener{
 
@@ -128,6 +81,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private RecyclerView mPhotoRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
+    private ProgressDialog mProgressDialog;
 
     // form inputs
     private String mUrgency;
@@ -140,7 +94,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private boolean mResEmployeeChecked;
 
     // other references
-    private List<String> mImagePathList;
+    private ArrayList<String> mImagePathList;
     private String mCurrentPhotoPath;
     private SharedPreferences mSharedPreferences;
     private String mAdminPublicKey;
@@ -149,6 +103,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private HttpClient mHttpclient;
     private boolean mTorInitialized;
     private HttpClientContext mHttpContext;
+
 
     public AddReportActivity() {
         mUrgency = "medium";
@@ -183,11 +138,10 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
         mAdminPublicKey = mSharedPreferences.getString("admin_public_key", "");
 
-
         // setup toolbar
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle("New Report");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
@@ -195,7 +149,6 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 onBackPressed();
 
             }
@@ -338,12 +291,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mSubmitbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(mIsAnonymous) {
-                    sendReportAnonymous();
-                } else {
-                    sendReportNonAnonymous();
-                }
-
+            sendReport();
             }
         });
     }
@@ -522,320 +470,91 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         }
     }
 
-    private void sendReportAnonymous() {
-        ReportThroughTor job = new ReportThroughTor();
+    private void sendReport() {
+        PrepareSendTask job = new PrepareSendTask();
         job.execute();
     }
 
-    private void sendReportNonAnonymous() {
-        // get url
-        String url = URL.SEND_REPORT;
+    public class PrepareSendTask extends AsyncTask<String, Void, Boolean> {
 
-        // create request
-        RequestQueue MyRequestQueue = Volley.newRequestQueue(this);
+        protected void onPreExecute() {
+            mProgressDialog = new ProgressDialog(AddReportActivity.this);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.setMessage("Please wait...");
+            mProgressDialog.show();
+        }
 
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d(TAG, "Volley Sucess: " + response);
-            }
-        }, new Response.ErrorListener() { //Create an error listener to handle errors appropriately.
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.d(TAG, "Volley Error: " + error.toString());
-                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
-                        Toast.LENGTH_LONG).show();
-                // TODO: remove report id that was added to db before request
-            }
-        }) {
-            protected Map<String, String> getParams() {
-                Map<String, String> MyData = new HashMap();
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            if(success) {
+                mProgressDialog.dismiss();
+                mProgressDialog = null;
+                mProgressDialog = new ProgressDialog(AddReportActivity.this);
+                mProgressDialog.setIndeterminate(true);
+                mProgressDialog.setMessage("Your report is being sent. Check Followup tab for updates");
+                mProgressDialog.setCancelable(false);
+                mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+                mProgressDialog.show();
+                new Handler().postDelayed(new Runnable() {
 
-                // get all request parameters
-                MyData = populateReportData(MyData);
-                MyData = populateReporterData(MyData, false);
-                MyData = populateKeys(MyData);
-
-                // save in local db
-                String is_anon ="0";
-                ChatBook.getChatBook(getApplicationContext()).addReport(
-                    new Report(MyData.get("report_id"),
-                        MyData.get("private_key"),
-                        mType,
-                        MyData.get("public_key"),
-                        System.currentTimeMillis(), is_anon)
-                );
-
-                // remove public key from data to be sent to server
-                MyData.remove("private_key");
-
-
-                // image upload, allows only 3
-                int imageCount = mImagePathList.size() - 1;
-                if (imageCount > 3) {
-                    imageCount = 3;
-                }
-                MyData.put("images_count", imageCount+"");
-                if(imageCount > 0) {
-                    try {
-                        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                        SecureRandom random = new SecureRandom();
-                        byte[] keyBytes = generateKey(random);
-                        byte[] ivBytes = generateIV(cipher, random);
-
-                        for(int i = 1; i <= imageCount; i++) {
-                            String path = mImagePathList.get(i);
-                            Bitmap bitmap = BitmapFactory.decodeFile(path);
-                            String image_str = getStringImage(bitmap);
-                            SecretKey key = new SecretKeySpec(keyBytes, "AES");
-                            String cipherImage = encryptAES(cipher, key, ivBytes, image_str);
-                            MyData.put("image"+i, cipherImage);
-                        }
-                        String key_str = Base64.encodeToString(keyBytes, Base64.DEFAULT);
-                        String iv_str = Base64.encodeToString(ivBytes, Base64.DEFAULT);
-                        MyData.put("images_key", key_str);
-                        MyData.put("images_iv", iv_str);
-                    } catch (Exception e ) {
-                        e.printStackTrace();
+                    @Override
+                    public void run() {
+                        mProgressDialog.dismiss();
+                        AddReportActivity.this.finish();
                     }
-                }
-
-                //// test encrypted image uplaod
-/*                Bitmap bitmap = BitmapFactory.decodeFile(mImagePathList.get(1));
-                String image = getStringImage(bitmap);
-                
-                try {
-                    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-                    SecureRandom random = new SecureRandom();
-                    byte[] keyBytes = generateKey(random);
-                    byte[] ivBytes = generateIV(cipher, random);
-                    SecretKey key = new SecretKeySpec(keyBytes, "AES");
-                    String cipherImage = encryptAES(cipher, key, ivBytes, image);
-                    String key_str = Base64.encodeToString(keyBytes, Base64.DEFAULT);
-                    String iv_str = Base64.encodeToString(ivBytes, Base64.DEFAULT);
-
-                    MyData.put("image", cipherImage);
-                    MyData.put("image_key", key_str);
-                    MyData.put("image_iv", iv_str);
-                } catch (Exception e ) {
-
-                }*/
-
-                return MyData;
+                }, 5000);
             }
-        };
-
-        MyRequestQueue.add(MyStringRequest);
-    }
-
-    private Map<String, String> populateReportData(Map<String, String> data) {
-        // create variables
-        String timestamp = "";
-        String type = "";
-        String urgency = "";
-        String location = "";
-        String description = "";
-
-        // format date
-        Format formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
-        timestamp = formatter.format(mDate);
-
-        // encrypt data
-        try {
-            urgency = ApplicationContext.getInstance().encryptForAdmin(mUrgency, mAdminPublicKey);
-            type = ApplicationContext.getInstance().encryptForAdmin(mType, mAdminPublicKey);
-            location = ApplicationContext.getInstance().encryptForAdmin(mLocation, mAdminPublicKey);
-            description = ApplicationContext.getInstance().encryptForAdmin(mDescription, mAdminPublicKey);
-        } catch (Exception e) {
-            Log.d(TAG, "Encryption error: " + e.getMessage());
         }
 
-        // add data to hashmap
-        data.put("type", type);
-        data.put("urgency", urgency);
-        data.put("timestamp", timestamp);
-        data.put("location", location);
-        data.put("description", description);
-        data.put("is_anonymous", mIsAnonymous + "");
-        data.put("is_resp_emp", mResEmployeeChecked + "");
-        data.put("follow_up_enabled", mFollowupEnabled + "");
-
-        return data;
-    }
-
-    private Map<String, String> populateReporterData(Map<String, String> data, boolean isAnon) {
-        // create variables
-        String name = "n/a";
-        String phone = "n/a";
-        String userid = "n/a";
-        String email = "n/a";
-        String dorm = "n/a";
-
-        if(!isAnon) {
-            // get user data from shared preferences
-            name = mSharedPreferences.getString("username", "n/a");
-            phone = mSharedPreferences.getString("userphone", "n/a");
-            userid = mSharedPreferences.getString("userid", "n/a");
-            email = mSharedPreferences.getString("useremail", "n/a");
-            dorm = mSharedPreferences.getString("userdorm", "n/a");
-        }
-
-        // encrypt data
-        try {
-            name = ApplicationContext.getInstance().encryptForAdmin(name, mAdminPublicKey);
-            phone = ApplicationContext.getInstance().encryptForAdmin(phone, mAdminPublicKey);
-            userid = ApplicationContext.getInstance().encryptForAdmin(userid, mAdminPublicKey);
-            email = ApplicationContext.getInstance().encryptForAdmin(email, mAdminPublicKey);
-            dorm = ApplicationContext.getInstance().encryptForAdmin(dorm, mAdminPublicKey);
-        } catch (Exception e) {
-            Log.d(TAG, "Encryption error: " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        // add data to hashmap
-        data.put("username", name);
-        data.put("userphone", phone);
-        data.put("userid", userid);
-        data.put("useremail", email);
-        data.put("userdorm", dorm);
-
-        return data;
-    }
-
-    private Map<String, String> populateKeys(Map<String, String> data) {
-        try{
-            // generate RSA keys
-            KeyPair keyPair = RSA.generateRsaKeyPair(2048);
-            String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
-            String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
-
-            // generate cookie
-            String reportId = generateCookie();
-            data.put("public_key", publicKeyPem);
-            data.put("private_key", privateKeyPem);
-            data.put("report_id", reportId);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return data;
-    }
-
-
-    private class ReportThroughTor extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String[] params) {
+        protected Boolean doInBackground(final String... args) {
             try {
-                mTorInitialized = ApplicationContext.getInstance().isTorReady();
-                mHttpclient = ApplicationContext.getInstance().getTorClient();
-                mHttpContext = ApplicationContext.getInstance().getTorContext();
+                HashMap<String, String> data = new HashMap();
 
-                // wait if not tor initilized yet
-                while(!mTorInitialized) {
-                    Thread.sleep(90);
-                    mTorInitialized = ApplicationContext.getInstance().isTorReady();
-                }
-                // get URL
-                HttpPost httpost = new HttpPost(URL.SEND_REPORT);
+                // generate RSA keys
+                KeyPair keyPair = RSA.generateRsaKeyPair(2048);
+                String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
+                String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
 
-                // get all request parameters
-                Map<String, String> MyData = new HashMap();
-                MyData = populateReportData(MyData);
-                MyData = populateReporterData(MyData, true);
-                MyData = populateKeys(MyData);
+                // generate cookie
+                String reportId = generateCookie();
 
                 // save in local db
-                String is_anon ="1";
+                String is_anon = (mIsAnonymous)? "1": "0";
+                String status = "Sending";
                 ChatBook.getChatBook(getApplicationContext()).addReport(
-                    new Report(MyData.get("report_id"),
-                        MyData.get("private_key"),
-                        mType,
-                        MyData.get("public_key"),
-                        System.currentTimeMillis(), is_anon)
+                        new Report(reportId,
+                                privateKeyPem,
+                                mType,
+                                publicKeyPem,
+                                System.currentTimeMillis(), is_anon, status)
                 );
 
-                // remove public key from data to be sent to server
-                MyData.remove("private_key");
+                // add keys to hashmap
+                data.put("public_key", publicKeyPem);
+                data.put("report_id", reportId);
 
-                // convert hashmap to json object
-                JSONObject holder = new JSONObject(MyData);
+                // format date
+                Format formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
+                String timestamp = formatter.format(mDate);
 
-                // pass results to a string builder
-                StringEntity se = new StringEntity(holder.toString());
+                // add form data to hashmap
+                data.put("type", mType);
+                data.put("urgency", mUrgency);
+                data.put("timestamp", timestamp);
+                data.put("location", mLocation);
+                data.put("description", mDescription);
+                data.put("is_anonymous", mIsAnonymous + "");
+                data.put("is_resp_emp", mResEmployeeChecked + "");
+                data.put("follow_up_enabled", mFollowupEnabled + "");
 
-                // set the post request as the resulting string
-                httpost.setEntity(se);
+                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList, mIsAnonymous);
 
-                // set request headers
-                httpost.setHeader("Accept", "application/json");
-                httpost.setHeader("Content-type", "application/json");
-
-                // handle reponse
-                HttpResponse response;
-                response = mHttpclient.execute(httpost, mHttpContext);
-                // Examine the response status
-                Log.i("TorTest", response.getStatusLine().toString());
-                // Get hold of the response entity
-                HttpEntity entity = response.getEntity();
-                // If the response does not enclose an entity, there is no need
-                // to worry about connection release
-                if (entity != null) {
-
-                    // A Simple JSON Response Read
-                    InputStream instream = entity.getContent();
-                    String result= convertStreamToString(instream);
-
-                    // get report id assigned by authentication server
-                    JSONObject jsonObj = new JSONObject(result);
-                    String report_id = jsonObj.get("report_id").toString();
-
-
-                    Log.d("TorTest", "Result: " + result);
-                    // now you have the string representation of the HTML request
-                    instream.close();
-                }
+            } catch (Exception e) {
+                return false;
             }
-            catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
-                        Toast.LENGTH_LONG).show();
-            }
-
-            return "some message";
+            return true;
         }
-
-        @Override
-        protected void onPostExecute(String message) {
-            //process message
-        }
-    }
-
-    // source: http://stackoverflow.com/questions/4457492/how-do-i-use-the-simple-http-client-in-android
-    private static String convertStreamToString(InputStream is) {
-    /*
-     * To convert the InputStream to String we use the BufferedReader.readLine()
-     * method. We iterate until the BufferedReader return null which means
-     * there's no more data to read. Each line will appended to a StringBuilder
-     * and returned as String.
-     */
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
     }
 
     private String generateCookie() {
@@ -869,59 +588,5 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             sb.append(hex);
         }
         return sb.toString();
-    }
-
-    private byte[] generateKey(SecureRandom random) {
-        try {
-            String password  = "password";
-            int iterationCount = 1000;
-            int keyLength = 256;
-            int saltLength = keyLength / 8; // same size as key output
-            byte[] salt = new byte[saltLength];
-            random.nextBytes(salt);
-            KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt,
-                    iterationCount, keyLength);
-            SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-            byte[] keyBytes = keyFactory.generateSecret(keySpec).getEncoded();
-
-            return keyBytes;
-        } catch(Exception e) {
-
-        }
-        return null;
-    }
-
-    private byte[] generateIV(Cipher cipher, SecureRandom random) {
-        try  {
-            byte[] iv = new byte[cipher.getBlockSize()];
-            random.nextBytes(iv);
-            IvParameterSpec ivParams = new IvParameterSpec(iv);
-            return iv;
-        } catch (Exception e) {
-
-        }
-        return null;
-    }
-
-    private String encryptAES(Cipher cipher, SecretKey key, byte[] iv, String plaintext) {
-        try {
-            IvParameterSpec ivParams = new IvParameterSpec(iv);
-            cipher.init(Cipher.ENCRYPT_MODE, key, ivParams);
-            byte[] encodedBytes = Base64.encode(cipher.doFinal(plaintext.getBytes("UTF-8")), Base64.DEFAULT);
-            String cipherText = new String(encodedBytes, "UTF-8");
-            return cipherText;
-        } catch (Exception e) {
-
-        }
-        return null;
-    }
-
-    // source: https://www.simplifiedcoding.net/android-volley-tutorial-to-upload-image-to-server/
-    public String getStringImage(Bitmap bmp){
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-        byte[] imageBytes = baos.toByteArray();
-        String encodedImage = Base64.encodeToString(imageBytes, Base64.DEFAULT);
-        return encodedImage;
     }
 }
