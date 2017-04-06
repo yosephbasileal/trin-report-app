@@ -58,9 +58,9 @@ import cz.msebera.android.httpclient.ssl.SSLContexts;
 public class ReportTabFragment extends Fragment {
 
     private static final String CS_PHONE_NUMBER = "8602972222";
-    private static final String T9_PHONE_NUMBER = "8602972222";
-    private static final String HC_PHONE_NUMBER = "8602972222";
-    private static final String CC_PHONE_NUMBER = "8602972222";
+    private static final String T9_PHONE_NUMBER = "8602975146";
+    private static final String HC_PHONE_NUMBER = "8602972020";
+    private static final String CC_PHONE_NUMBER = "8602972415";
 
     private Button mAddReportButton;
     private Button mCallCsSafetyButton;

@@ -11,25 +11,30 @@
         android:id="@+id/toolbar_main"
         android:layout_width="match_parent"
         android:layout_height="56dp"
+        android:layout_marginRight="12dp"
         android:background="@color/colorActionBar"
         app:theme="@style/ThemeOverlay.AppCompat.Light"
         android:layout_alignParentTop="true">
 
-        <Button
+        <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:text="D"
+            android:src="@drawable/ic_delete_forever_black_24dp"
             android:layout_gravity="right"
             android:id="@+id/delete_all_tables"
+            android:scaleType="fitCenter"
+            android:padding="10dp"
             android:visibility="gone"
             />
 
-        <Button
+        <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:text="R"
+            android:src="@drawable/ic_refresh_black_24dp"
             android:layout_gravity="right"
             android:id="@+id/refresh_followup"
+            android:scaleType="fitCenter"
+            android:padding="10dp"
             android:visibility="gone"
             />
     </android.support.v7.widget.Toolbar>

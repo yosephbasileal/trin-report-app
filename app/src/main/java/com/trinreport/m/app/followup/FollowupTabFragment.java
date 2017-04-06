@@ -38,8 +38,8 @@ public class FollowupTabFragment extends Fragment {
     private static final String TAG = "FollowupTabFragment";
 
     private List<Report> mReportsList;
-    private Button mDeleteAllButton;
-    private Button mRefreshButton;
+    private ImageButton mDeleteAllButton;
+    private ImageButton mRefreshButton;
     private RecyclerView mThreadsRecyclerView;
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
@@ -80,8 +80,8 @@ public class FollowupTabFragment extends Fragment {
         // attach adpater to recycler view
         mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         mNotice = (TextView) v.findViewById(R.id.followup_text_notice);
-        mDeleteAllButton = (Button) getActivity().findViewById(R.id.delete_all_tables);
-        mRefreshButton = (Button) getActivity().findViewById(R.id.refresh_followup);
+        mDeleteAllButton = (ImageButton) getActivity().findViewById(R.id.delete_all_tables);
+        mRefreshButton = (ImageButton) getActivity().findViewById(R.id.refresh_followup);
         mThreadsRecyclerView = (RecyclerView) v.findViewById(R.id.listview_threads);
         mLayoutManager = new LinearLayoutManager(getActivity(), LinearLayoutManager.VERTICAL, false);
         mThreadsRecyclerView.setLayoutManager(mLayoutManager);

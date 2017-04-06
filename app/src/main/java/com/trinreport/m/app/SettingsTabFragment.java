@@ -53,16 +53,25 @@ public class SettingsTabFragment extends PreferenceFragment
         bindPreferenceSummaryToValue(findPreference("useremail"));
         bindPreferenceSummaryToValue(findPreference("userdorm"));
 
+        bindPreferenceSummaryToValue(findPreference("notifications"));
+
     }
 
     private void bindPreferenceSummaryToValue(Preference preference) {
         // set the listener to watch for value changes
         preference.setOnPreferenceChangeListener(this);
 
-        onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+        if(preference.getKey().equals("notifications")) {
+            onPreferenceChange(preference,
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.getContext())
+                            .getBoolean(preference.getKey(), true));
+        } else {
+            onPreferenceChange(preference,
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.getContext())
+                            .getString(preference.getKey(), ""));
+        }
     }
 
     @Override

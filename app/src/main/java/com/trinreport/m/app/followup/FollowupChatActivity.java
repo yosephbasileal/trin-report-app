@@ -1,6 +1,7 @@
 package com.trinreport.m.app.followup;
 
 import android.content.SharedPreferences;
+import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -20,6 +21,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -63,11 +65,15 @@ import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
 import cz.msebera.android.httpclient.entity.StringEntity;
 import cz.msebera.android.httpclient.impl.client.HttpClients;
 import cz.msebera.android.httpclient.impl.conn.PoolingHttpClientConnectionManager;
+import cz.msebera.android.httpclient.params.BasicHttpParams;
+import cz.msebera.android.httpclient.params.HttpConnectionParams;
+import cz.msebera.android.httpclient.params.HttpParams;
 import cz.msebera.android.httpclient.ssl.SSLContexts;
 
 public class FollowupChatActivity extends AppCompatActivity {
 
     private static final String TAG = "FollowupChatActivity";
+    private static int MY_SOCKET_TIMEOUT_MS = 10000; // 10 seconds
 
     public static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORT_ID2";
     public static final String EXTRA_THREAD_TITLE = "com.trinreport.m.app.extra_THREAD_TITLE";
@@ -78,6 +84,7 @@ public class FollowupChatActivity extends AppCompatActivity {
     private ListView mListView;
     private EditText mChatText;
     private ImageButton mButtonSend;
+    private ImageButton mButtonRefresh;
     private boolean mSide = false;
 
     private RecyclerView mRecyclerView;
@@ -135,6 +142,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         mNotice = (TextView) findViewById(R.id.chat_text_notice);
         mButtonSend = (ImageButton) findViewById(R.id.send);
+        mButtonRefresh = (ImageButton) findViewById(R.id.refresh_chat);
         mRecyclerView = (RecyclerView) findViewById(R.id.msgview);
         mChatText = (EditText) findViewById(R.id.msg);
         mForm = (LinearLayout) findViewById(R.id.form);
@@ -173,6 +181,14 @@ public class FollowupChatActivity extends AppCompatActivity {
                 return false;
             }
         });
+
+        mButtonRefresh.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getMessages();
+            }
+        });
+
         mButtonSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
@@ -341,6 +357,7 @@ public class FollowupChatActivity extends AppCompatActivity {
                     updateMessagesList();
                 } catch (Exception e) {
                     Log.d(TAG, "Exception: " + e.toString());
+                    e.printStackTrace();
                 }
             }
         }, new Response.ErrorListener() { //listener to handle errors
@@ -359,6 +376,11 @@ public class FollowupChatActivity extends AppCompatActivity {
                 return MyData;
             }
         };
+
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                MY_SOCKET_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         // add to queue
         requestQueue.add(stringRequest);
@@ -457,6 +479,10 @@ public class FollowupChatActivity extends AppCompatActivity {
                 // set request headers
                 httpost.setHeader("Accept", "application/json");
                 httpost.setHeader("Content-type", "application/json");
+
+                // set timeout
+                HttpParams httpParameters = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParameters, MY_SOCKET_TIMEOUT_MS);
 
                 // handle reponse
                 HttpResponse response;
