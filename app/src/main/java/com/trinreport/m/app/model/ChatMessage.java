@@ -8,14 +8,14 @@ public class ChatMessage {
     public String isAdmin;  // sent by admin
     public String message;
     private String timestamp;
-    private String thread_id;
+    private String report_id;
 
-    public ChatMessage(String admin, String message, String timestamp, String thread_id) {
+    public ChatMessage(String admin, String message, String timestamp, String report_id) {
         super();
         this.isAdmin = admin;
         this.message = message;
         this.timestamp = timestamp;
-        this.thread_id = thread_id;
+        this.report_id = report_id;
     }
 
     public String getIsAdmin() {
@@ -30,8 +30,8 @@ public class ChatMessage {
         return timestamp;
     }
 
-    public String getThreadId() {
-        return thread_id;
+    public String getReportId() {
+        return report_id;
     }
 }
 

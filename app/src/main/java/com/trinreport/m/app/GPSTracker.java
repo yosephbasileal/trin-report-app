@@ -169,7 +169,7 @@ public class GPSTracker extends Service implements LocationListener {
         alertDialog.setTitle("GPS Settings");
 
         // Setting Dialog Message
-        alertDialog.setMessage("Go to settingd and enable GPS?");
+        alertDialog.setMessage("Go to settings and enable GPS?");
 
         // On pressing the Settings button.
         alertDialog.setPositiveButton("Settings", new DialogInterface.OnClickListener() {

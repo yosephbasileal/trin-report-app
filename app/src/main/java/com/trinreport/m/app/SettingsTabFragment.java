@@ -17,6 +17,7 @@ import android.support.v7.widget.Toolbar;
 public class SettingsTabFragment extends PreferenceFragment
         implements Preference.OnPreferenceChangeListener {
 
+    private Toolbar mToolbar;
 
     /**
      * Factory method to create a new instance of
@@ -37,6 +38,13 @@ public class SettingsTabFragment extends PreferenceFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        // setup toolbar
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Settings");
+        }
+
         addPreferencesFromResource(R.xml.preferences);
 
         bindPreferenceSummaryToValue(findPreference("username"));
@@ -45,16 +53,25 @@ public class SettingsTabFragment extends PreferenceFragment
         bindPreferenceSummaryToValue(findPreference("useremail"));
         bindPreferenceSummaryToValue(findPreference("userdorm"));
 
+        bindPreferenceSummaryToValue(findPreference("notifications"));
+
     }
 
     private void bindPreferenceSummaryToValue(Preference preference) {
         // set the listener to watch for value changes
         preference.setOnPreferenceChangeListener(this);
 
-        onPreferenceChange(preference,
-                PreferenceManager
-                        .getDefaultSharedPreferences(preference.getContext())
-                        .getString(preference.getKey(), ""));
+        if(preference.getKey().equals("notifications")) {
+            onPreferenceChange(preference,
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.getContext())
+                            .getBoolean(preference.getKey(), true));
+        } else {
+            onPreferenceChange(preference,
+                    PreferenceManager
+                            .getDefaultSharedPreferences(preference.getContext())
+                            .getString(preference.getKey(), ""));
+        }
     }
 
     @Override

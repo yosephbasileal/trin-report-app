@@ -11,28 +11,24 @@ public class ChatDbContract {
     // make the constructor private.
     private ChatDbContract() {}
 
-    /* Inner class that defines the thread table contents */
-    public static class ThreadEntry implements BaseColumns {
-        public static final String TABLE_NAME = "thread";
-        public static final String COLUMN_TITLE = "title";
-        public static final String COLUMN_LAST_MESSAGE = "last_message";
-        public static final String COLUMN_LAST_UPDATED = "last_updated";
-        public static final String COLUMN_THREAD_ID = "thread_id";
-    }
-
     /* Inner class that defines the table contents */
     public static class MessageEntry implements BaseColumns {
         public static final String TABLE_NAME = "message";
         public static final String COLUMN_TIMESTAMP = "timestamp";
         public static final String COLUMN_MESSAGE = "message";
         public static final String COLUMN_IS_ADMIN = "is_admin";
-        public static final String COLUMN_THREAD_ID = "thread_id";
+        public static final String COLUMN_REPORT_ID = "report_id";
     }
 
     /* Inner class that defines the table contents */
-    public static class KeyEntry implements BaseColumns {
+    public static class ReportEntry implements BaseColumns {
         public static final String TABLE_NAME = "keys";
         public static final String COLUMN_PRIVATE_KEY = "privatekey";
         public static final String COLUMN_REPORT_ID = "report_id";
+        public static final String COLUMN_REPORT_TITLE = "title";
+        public static final String COLUMN_PUBLIC_KEY = "publickey";
+        public static final String COLUMN_DATE_CREATED = "date_created";
+        public static final String COLUMN_IS_ANON = "is_anonymous";
+        public static final String COLUMN_STATUS = "status";
     }
 }

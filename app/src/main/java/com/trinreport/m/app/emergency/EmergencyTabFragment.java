@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,9 +23,9 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
 
 import org.json.JSONException;
@@ -43,12 +45,14 @@ public class EmergencyTabFragment extends Fragment {
 
     // layout references
     private Button mEmergencyButton;
+    private Toolbar mToolbar;
 
     // other refernces
     private Location mLocation;
     private GPSTracker mGpsTracker;
     private SharedPreferences mSharedPrefs;
     private String mAdminPublicKey;
+
 
     /**
      * Factory method to create a new instance of this fragment
@@ -69,8 +73,15 @@ public class EmergencyTabFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
+
+        mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
+
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        if (mToolbar != null) {
+            ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
+            ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("");
+        }
 
         // initialize gps tracker
         mGpsTracker = new GPSTracker(getActivity());
@@ -98,16 +109,6 @@ public class EmergencyTabFragment extends Fragment {
         });
 
         return v;
-    }
-
-    private void startEmergencyActivity(String report_id) {
-        Intent i = new Intent(getActivity(), Emergency.class);
-        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
-        startActivity(i);
-    }
-
-    private String encrypt(String plain) throws Exception {
-        return RSA.encrypt(plain, mAdminPublicKey);
     }
 
     private void notifyEmergency() {
@@ -145,31 +146,35 @@ public class EmergencyTabFragment extends Fragment {
                 Map<String, String> MyData = new HashMap<>();
 
                 // get user data from shared preferences
-                String name = mSharedPrefs.getString("username", "");
-                String phone = mSharedPrefs.getString("userphone", "");
-                String userid = mSharedPrefs.getString("userid", "");
+                String name = mSharedPrefs.getString("username", "n/a");
+                String phone = mSharedPrefs.getString("userphone", "n/a");
+                String userid = mSharedPrefs.getString("userid", "n/a");
+                String email = mSharedPrefs.getString("useremail", "n/a");
+                String dorm = mSharedPrefs.getString("userdorm", "n/a");
                 String longitude = String.valueOf(mLocation.getLongitude());
                 String latitude = String.valueOf(mLocation.getLatitude());
-                String explanation = "N/A"; // to be added later
-
+                String explanation = "N/A"; // to be sent later from Emergecy activity
 
                 // encrypt data
-                /*try {
-                    name = encrypt(name);
-                    phone = encrypt(phone);
-                    userid = encrypt(userid);
-                    //longitude = encrypt(longitude);
-                    //latitude = encrypt(latitude);
-                    explanation = encrypt(explanation);
-
+                try {
+                    name = ApplicationContext.getInstance().encryptForAdmin(name, mAdminPublicKey);
+                    phone = ApplicationContext.getInstance().encryptForAdmin(phone, mAdminPublicKey);
+                    userid = ApplicationContext.getInstance().encryptForAdmin(userid, mAdminPublicKey);
+                    email = ApplicationContext.getInstance().encryptForAdmin(email, mAdminPublicKey);
+                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm, mAdminPublicKey);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
-                }*/
+                }
 
                 // add data to hashmap
                 MyData.put("username", name);
                 MyData.put("userphone", phone);
                 MyData.put("userid", userid);
+                MyData.put("useremail", email);
+                MyData.put("userdorm", dorm);
                 MyData.put("longitude", longitude);
                 MyData.put("latitude", latitude);
                 MyData.put("explanation", explanation);
@@ -180,5 +185,11 @@ public class EmergencyTabFragment extends Fragment {
 
         // add to queue
         requestQueue.add(stringRequest);
+    }
+
+    private void startEmergencyActivity(String report_id) {
+        Intent i = new Intent(getActivity(), Emergency.class);
+        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
+        startActivity(i);
     }
 }

@@ -31,7 +31,6 @@ dependencies {
     compile 'com.android.support:design:23.4.0'
     compile 'com.mcxiaoke.volley:library:1.0.19'
     compile 'com.roughike:bottom-bar:2.0.2'
-    compile 'com.google.firebase:firebase-messaging:10.0.1'
     testCompile 'junit:junit:4.12'
     compile 'com.nimbusds:nimbus-jose-jwt:4.34.1'
     compile 'net.minidev:minidev-parent:2.2'

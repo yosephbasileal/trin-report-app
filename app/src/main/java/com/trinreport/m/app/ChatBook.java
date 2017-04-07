@@ -4,14 +4,12 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.trinreport.m.app.database.ChatDbContract;
 import com.trinreport.m.app.database.ChatDbCursorWrapper;
 import com.trinreport.m.app.database.ChatDbHelper;
-import com.trinreport.m.app.model.ChatKey;
 import com.trinreport.m.app.model.ChatMessage;
-import com.trinreport.m.app.model.Thread;
+import com.trinreport.m.app.model.Report;
 
 import java.util.ArrayList;
 
@@ -51,24 +49,16 @@ public class ChatBook {
         mDatabaseHelper.onUpgrade(mDatabase, 0, 1);
     }
 
-    public void deleteThreads() {
-        mDatabaseHelper.deleteThreads(mDatabase);
+    public void deleteMessages(String reportId) {
+        mDatabase.delete(ChatDbContract.MessageEntry.TABLE_NAME, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
     }
 
-    public void deleteThread(String threadId) {
-        mDatabase.delete(ChatDbContract.ThreadEntry.TABLE_NAME, ChatDbContract.ThreadEntry.COLUMN_THREAD_ID + " = ?",
-                new String[]{threadId});
-        mDatabase.delete(ChatDbContract.MessageEntry.TABLE_NAME, ChatDbContract.MessageEntry.COLUMN_THREAD_ID + " = ?",
-                new String[]{threadId});
-    }
-
-    public void deleteKeys() {
-        mDatabaseHelper.deleteKeys(mDatabase);
-    }
-
-    public void addThread(Thread thread) {
-        ContentValues values = getContentValues(thread);
-        mDatabase.insert(ChatDbContract.ThreadEntry.TABLE_NAME, null, values);
+    public void deleteReport(String reportId) {
+        mDatabase.delete(ChatDbContract.ReportEntry.TABLE_NAME, ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
+        mDatabase.delete(ChatDbContract.MessageEntry.TABLE_NAME, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
     }
 
     public void addMessage(ChatMessage message) {
@@ -76,21 +66,16 @@ public class ChatBook {
         mDatabase.insert(ChatDbContract.MessageEntry.TABLE_NAME, null, values);
     }
 
-    public void addChatKey(ChatKey key) {
-        ContentValues values = getContentValues(key);
-        mDatabase.insert(ChatDbContract.KeyEntry.TABLE_NAME, null, values);
+    public void addReport(Report report) {
+        ContentValues values = getContentValues(report);
+        mDatabase.insert(ChatDbContract.ReportEntry.TABLE_NAME, null, values);
     }
 
-    /**
-     * Gets content values of a thread
-     */
-    private static ContentValues getContentValues(Thread thread) {
+    public void updateReportStatus(String reportId, String status) {
         ContentValues values = new ContentValues();
-        values.put(ChatDbContract.ThreadEntry.COLUMN_TITLE, thread.getTitle());
-        values.put(ChatDbContract.ThreadEntry.COLUMN_THREAD_ID, thread.getThreadId());
-        values.put(ChatDbContract.ThreadEntry.COLUMN_LAST_MESSAGE, thread.getLastMessage());
-        values.put(ChatDbContract.ThreadEntry.COLUMN_LAST_UPDATED, thread.getLastUpdated());
-        return values;
+        values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, status);
+        mDatabase.update(ChatDbContract.ReportEntry.TABLE_NAME, values, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
     }
 
     /**
@@ -99,53 +84,36 @@ public class ChatBook {
     private static ContentValues getContentValues(ChatMessage message) {
         ContentValues values = new ContentValues();
         values.put(ChatDbContract.MessageEntry.COLUMN_IS_ADMIN, message.getIsAdmin());
-        values.put(ChatDbContract.MessageEntry.COLUMN_THREAD_ID, message.getThreadId());
+        values.put(ChatDbContract.MessageEntry.COLUMN_REPORT_ID, message.getReportId());
         values.put(ChatDbContract.MessageEntry.COLUMN_MESSAGE, message.getMessage());
         values.put(ChatDbContract.MessageEntry.COLUMN_TIMESTAMP, message.getTimestamp());
         return values;
     }
 
     /**
-     * Gets content values of a chat key
+     * Gets content values of a report
      */
-    private static ContentValues getContentValues(ChatKey key) {
+    private static ContentValues getContentValues(Report report) {
         ContentValues values = new ContentValues();
-        values.put(ChatDbContract.KeyEntry.COLUMN_PRIVATE_KEY, key.getPrvKey());
-        values.put(ChatDbContract.KeyEntry.COLUMN_REPORT_ID, key.getReportId());
+        values.put(ChatDbContract.ReportEntry.COLUMN_PRIVATE_KEY, report.getPrvKey());
+        values.put(ChatDbContract.ReportEntry.COLUMN_REPORT_ID, report.getReportId());
+        values.put(ChatDbContract.ReportEntry.COLUMN_REPORT_TITLE, report.getTitle());
+        values.put(ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY, report.getPubKey());
+        values.put(ChatDbContract.ReportEntry.COLUMN_DATE_CREATED, report.getDateCreated());
+        values.put(ChatDbContract.ReportEntry.COLUMN_IS_ANON, report.getIsAnon());
+        values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, report.getStatus());
         return values;
     }
 
     /**
-     * Get all threads
+     * Get all messages of a report
      */
-    public ArrayList<Thread> getThreads() {
-        ArrayList<Thread> threads = new ArrayList<>();
-
-        ChatDbCursorWrapper cursor = queryThreads(null,null);
-
-        try {
-            cursor.moveToFirst();
-            while(!cursor.isAfterLast()) {
-                Thread thread = cursor.getThread();
-                threads.add(thread);
-                cursor.moveToNext();
-            }
-        } finally {
-            cursor.close();
-        }
-        return threads;
-    }
-
-    /**
-     * Get all messages of a thread
-     */
-    public ArrayList<ChatMessage> getMessages(String threadId) {
-        Log.d("Chatbook", threadId);
+    public ArrayList<ChatMessage> getMessages(String reportId) {
         ArrayList<ChatMessage> messages = new ArrayList<>();
 
         ChatDbCursorWrapper cursor = queryMessages(
-                ChatDbContract.MessageEntry.COLUMN_THREAD_ID + " = ?",
-                new String[]{threadId});
+                ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
 
         try {
             cursor.moveToFirst();
@@ -161,43 +129,43 @@ public class ChatBook {
     }
 
     /**
-     * Get all chat thread keys
+     * Get a report using its ID
      */
-    public ArrayList<ChatKey> getKeys() {
-        ArrayList<ChatKey> keys = new ArrayList<>();
+    public Report getReport(String reportId) {
+        ChatDbCursorWrapper cursor = queryReports(
+                ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId}
+        );
+        try {
+            if (cursor.getCount() == 0) {
+                return null;
+            }
+            cursor.moveToFirst();
+            return cursor.getReport();
+        } finally {
+            cursor.close();
+        }
+    }
 
-        ChatDbCursorWrapper cursor = queryKeys(null, null);
+    /**
+     * Get all reports
+     */
+    public ArrayList<Report> getReports() {
+        ArrayList<Report> reports = new ArrayList<>();
+
+        ChatDbCursorWrapper cursor = queryReports(null, null);
 
         try {
             cursor.moveToFirst();
             while(!cursor.isAfterLast()) {
-                ChatKey key = cursor.getKey();
-                keys.add(key);
+                Report report = cursor.getReport();
+                reports.add(report);
                 cursor.moveToNext();
             }
         } finally {
             cursor.close();
         }
-        return keys;
-    }
-
-    /**
-     * Get cursor for querying threads table
-     * @param whereClause where clause of query
-     * @param whereArgs arguments for query
-     * @return cursor wrapper object
-     */
-    private ChatDbCursorWrapper queryThreads(String whereClause, String[] whereArgs) {
-        Cursor cursor = mDatabase.query(
-                ChatDbContract.ThreadEntry.TABLE_NAME,
-                null, //all column
-                whereClause,
-                whereArgs,
-                null, //group by
-                null, //having
-                null //order by
-        );
-        return new ChatDbCursorWrapper(cursor);
+        return reports;
     }
 
     /**
@@ -225,9 +193,9 @@ public class ChatBook {
      * @param whereArgs arguments for query
      * @return cursor wrapper object
      */
-    private ChatDbCursorWrapper queryKeys(String whereClause, String[] whereArgs) {
+    private ChatDbCursorWrapper queryReports(String whereClause, String[] whereArgs) {
         Cursor cursor = mDatabase.query(
-                ChatDbContract.KeyEntry.TABLE_NAME,
+                ChatDbContract.ReportEntry.TABLE_NAME,
                 null, //all column
                 whereClause,
                 whereArgs,

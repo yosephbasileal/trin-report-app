@@ -1,12 +1,11 @@
 package com.trinreport.m.app.emergency;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.location.Location;
 import android.net.Uri;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -29,12 +28,18 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.trinreport.m.app.ApplicationContext;
+import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This activity is opened when use presses the emergency button
@@ -47,6 +52,7 @@ public class Emergency extends AppCompatActivity {
     public static final String EMERGENCY_STATUS = "com.trinreport.m.app.extra.STATUS";
     public static final String EMERGENCY_STATUS_FILTER = "com.trinreport.m.app.action.new_status";
     private static final String CS_PHONE_NUMBER = "8602972222";
+    private static final int UPDATE_FREQUENCY = 5000; // 5 seconds
 
     // layour references
     private Toolbar mToolbar;
@@ -59,15 +65,20 @@ public class Emergency extends AppCompatActivity {
     private Button mCallCsSafetyButton;
 
     // other references
-    BroadcastReceiver broadcastReceiver;
-    private String mAdminPublicKey;
     private SharedPreferences mSharedPrefs;
+    private GPSTracker mGpsTracker;
+    private Location mLocation;
+    private Handler mHandler;
+    private Runnable mRunnable;
+    private Timer mTimer;
 
     // variables
     private String mExplanation;
     private String mReportId;
     private Boolean mReceieved = false;
     private Boolean mCanCallMe = true;
+
+    private String mAdminPublicKey;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +87,9 @@ public class Emergency extends AppCompatActivity {
         // inflate layout
         setContentView(R.layout.activity_emergency);
 
+        mGpsTracker = new GPSTracker(ApplicationContext.get());
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+
         mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
 
         // get references
@@ -92,7 +105,7 @@ public class Emergency extends AppCompatActivity {
         // setup toolbar
         if (mToolbar != null) {
             setSupportActionBar(mToolbar);
-            getSupportActionBar().setTitle(null);
+            getSupportActionBar().setTitle("Emergency");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
@@ -100,9 +113,7 @@ public class Emergency extends AppCompatActivity {
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 onBackPressed();
-
             }
         });
 
@@ -112,9 +123,8 @@ public class Emergency extends AppCompatActivity {
         // initialize status to not recieved
         updateStatus();
 
-        // start background service for requesting updated status drom rddp and sending gps points
-        registerBroadcastReceiver();
-        EmergencyStatusService.startActionUpdateStatus(this, mReportId);
+        // start background task to request update every 5 seconds
+        callAsynchronousTask();
 
         // add listener to text field for adding explanation about emergency situation
         mExplanationEditText.addTextChangedListener(new TextWatcher() {
@@ -181,43 +191,21 @@ public class Emergency extends AppCompatActivity {
     protected  void onResume() {
         super.onResume();
         Log.d(TAG, "Emergency activity resumed");
-        registerBroadcastReceiver();
     }
 
     @Override
     protected  void onStop() {
         Log.d(TAG, "Emergency activity stopped");
-        // stop emergency status service
-        unregisterReceiver(broadcastReceiver);
-        stopService(new Intent(this, EmergencyStatusService.class));
         super.onStop();
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "Emergency activity destroyed");
-        try {
-            if(broadcastReceiver != null)
-                unregisterReceiver(broadcastReceiver);
-        } catch(Exception e) {
-
-        }
+        // cancel background update thread
+        mHandler.removeCallbacks(mRunnable);
+        mTimer.cancel();
         super.onDestroy();
-    }
-
-    /**
-     * This method will register a reciever that will recieve intent from EmergencyStatusService
-      */
-    private void registerBroadcastReceiver() {
-        broadcastReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                mReceieved = intent.getBooleanExtra(EMERGENCY_STATUS, false);
-                updateStatus();
-            }
-        };
-        IntentFilter filter = new IntentFilter(EMERGENCY_STATUS_FILTER);
-        registerReceiver(broadcastReceiver, filter);
     }
 
     /**
@@ -234,8 +222,26 @@ public class Emergency extends AppCompatActivity {
         }
     }
 
-    private String encrypt(String plain) throws Exception {
-        return RSA.encrypt(plain, mAdminPublicKey);
+    public void callAsynchronousTask() {
+        mHandler = new Handler();
+        mTimer = new Timer();
+        TimerTask doAsynchronousTask = new TimerTask() {
+            @Override
+            public void run() {
+                mRunnable = new Runnable() {
+                    public void run() {
+                        try {
+                            mLocation = mGpsTracker.getLocation();
+                            getEmergencyStatus();
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                        }
+                    }
+                };
+                mHandler.post(mRunnable);
+            }
+        };
+        mTimer.schedule(doAsynchronousTask, 0, UPDATE_FREQUENCY);
     }
 
     private void sendExplanation() {
@@ -263,13 +269,12 @@ public class Emergency extends AppCompatActivity {
                 String explanation = mExplanation;
 
                 // encrypt data
-                /*try {
-                    explanation = encrypt(explanation);
+                try {
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
-                }*/
-
+                }
 
                 MyData.put("emergency_id", mReportId);
                 MyData.put("explanation", explanation);
@@ -304,6 +309,62 @@ public class Emergency extends AppCompatActivity {
                 Map<String, String> MyData = new HashMap<>();
                 MyData.put("emergency_id", mReportId);
                 MyData.put("callme", mCanCallMe.toString());
+                return MyData;
+            }
+        };
+
+        // add to queue
+        requestQueue.add(stringRequest);
+    }
+
+    private void getEmergencyStatus() {
+        // get url
+        String url = URL.CHECK_EMERGENCY_STATUS;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST,
+                url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                Log.d(TAG, "Volley Sucess: " + response);
+                try {
+                    // get status and send broadcast intent
+                    JSONObject jsonObj = new JSONObject(response);
+                    Boolean received = (Boolean) jsonObj.get("handled_status");
+                    mReceieved = received;
+                    updateStatus();
+                } catch (JSONException e) {
+                    Log.d(TAG, "JSONException: " + e.toString());
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "VolleyError: " + error.getMessage());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }) {
+            protected Map<String, String> getParams() {
+                Map<String, String> MyData = new HashMap();
+
+                String longitude = String.valueOf(mLocation.getLongitude());
+                String latitude = String.valueOf(mLocation.getLatitude());
+
+                // encrypt data
+                try {
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
+
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+
+                // add data to hashmap
+                MyData.put("longitude", longitude);
+                MyData.put("latitude", latitude);
+                MyData.put("emergency_id", mReportId);
                 return MyData;
             }
         };
