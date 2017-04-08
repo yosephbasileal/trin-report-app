@@ -40,8 +40,17 @@ public class ChatDbCursorWrapper extends CursorWrapper {
         String is_anon = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_IS_ANON));
         String status = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_STATUS));
 
+        String urgency= getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_URGENCY));
+        String timestamp = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_TIMESTAMP));
+        String location = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_LOCATION));
+        String description = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_DESCRIPTION));
+        String is_resp = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_IS_RESP));
+        String is_followup = getString(getColumnIndex(ChatDbContract.ReportEntry.COLUMN_IS_FOLLOWUP));
+
+
         // create the object and set all the values
         Report report = new Report(report_id, prv_key, title, pub_key, date_created, is_anon, status);
+        report.add_data(urgency, timestamp, location, description, is_resp, is_followup);
         return report;
     }
 }

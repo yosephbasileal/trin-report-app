@@ -1,9 +1,11 @@
 package com.trinreport.m.app.followup;
 
+import android.app.ProgressDialog;
 import android.content.SharedPreferences;
 import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
@@ -14,6 +16,7 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
@@ -33,9 +36,12 @@ import com.msopentech.thali.toronionproxy.OnionProxyManager;
 import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
+import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
 import com.trinreport.m.app.model.ChatMessage;
 import com.trinreport.m.app.model.Report;
+import com.trinreport.m.app.report.AddReportActivity;
+import com.trinreport.m.app.report.SendReportService;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
 
@@ -48,6 +54,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.security.KeyPair;
+import java.text.Format;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -85,6 +94,12 @@ public class FollowupChatActivity extends AppCompatActivity {
     private EditText mChatText;
     private ImageButton mButtonSend;
     private ImageButton mButtonRefresh;
+    private LinearLayout mNoticeButtons;
+
+    private Button mButtonRetry;
+    private Button mButtonView;
+
+
     private boolean mSide = false;
 
     private RecyclerView mRecyclerView;
@@ -94,6 +109,7 @@ public class FollowupChatActivity extends AppCompatActivity {
     private Toolbar mToolbar;
     private TextView mNotice;
     private LinearLayout mForm;
+    private ProgressDialog mProgressDialog;
 
     private List<ChatMessage> mMessagesList = new ArrayList<>();
     private String mReportId;
@@ -143,6 +159,9 @@ public class FollowupChatActivity extends AppCompatActivity {
         mNotice = (TextView) findViewById(R.id.chat_text_notice);
         mButtonSend = (ImageButton) findViewById(R.id.send);
         mButtonRefresh = (ImageButton) findViewById(R.id.refresh_chat);
+        mButtonRetry = (Button) findViewById(R.id.button_retry);
+        mButtonView = (Button) findViewById(R.id.button_view);
+        mNoticeButtons = (LinearLayout) findViewById(R.id.chat_notice_buttons) ;
         mRecyclerView = (RecyclerView) findViewById(R.id.msgview);
         mChatText = (EditText) findViewById(R.id.msg);
         mForm = (LinearLayout) findViewById(R.id.form);
@@ -153,6 +172,14 @@ public class FollowupChatActivity extends AppCompatActivity {
             mForm.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.GONE);
             mNotice.setText("Your report was not sent successully. Try again!");
+            mNoticeButtons.setVisibility(View.VISIBLE);
+
+            mButtonRetry.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    resendReport();
+                }
+            });
             return;
         }
 
@@ -161,11 +188,13 @@ public class FollowupChatActivity extends AppCompatActivity {
             mForm.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.GONE);
             mNotice.setText("Your report is being processed to be sent. Check back later.");
+            mNoticeButtons.setVisibility(View.INVISIBLE);
             return;
         }
 
 
         getMessages();
+
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new MessageAdapter();
@@ -195,6 +224,8 @@ public class FollowupChatActivity extends AppCompatActivity {
                 sendChatMessage();
             }
         });
+
+
     }
 
     private void updateMessagesList() {
@@ -204,11 +235,14 @@ public class FollowupChatActivity extends AppCompatActivity {
     private boolean sendChatMessage() {
         // send to server
         String content = mChatText.getText().toString();
-        if(!mReport.isAnon()) {
+        /*if(!mReport.isAnon()) {
             sendMessage(content);
         } else {
+            initTor();
             sendMessageThroughTor(content);
-        }
+        }*/
+
+        sendMessage(content);
 
         // add to list
         String fromAdmin = "0";
@@ -313,9 +347,10 @@ public class FollowupChatActivity extends AppCompatActivity {
             mMessagesList = result;
             mAdapter.notifyDataSetChanged();
             mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
-
+            Log.d(TAG, "Messages: " + mMessagesList.toString());
             if(mMessagesList.size() == 0) {
                 mNotice.setText("No follow up messages. You can send message by writing below.");
+                mNoticeButtons.setVisibility(View.INVISIBLE);
             } else {
                 mNotice.setText("");
             }
@@ -576,6 +611,67 @@ public class FollowupChatActivity extends AppCompatActivity {
         return HttpClients.custom()
                 .setConnectionManager(cm)
                 .build();
+    }
+
+    private void resendReport() {
+        PrepareReSendTask job = new PrepareReSendTask();
+        job.execute();
+    }
+
+    public class PrepareReSendTask extends AsyncTask<String, Void, Boolean> {
+
+        protected void onPreExecute() {
+            mProgressDialog = new ProgressDialog(FollowupChatActivity.this);
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setMessage("Your report is being resent. Check Followup tab for updates");
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+            mProgressDialog.show();
+            new Handler().postDelayed(new Runnable() {
+
+                @Override
+                public void run() {
+                    mProgressDialog.dismiss();
+                    FollowupChatActivity.this.finish();
+                }
+            }, 3000);
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+
+        }
+
+        protected Boolean doInBackground(final String... args) {
+            try {
+                HashMap<String, String> data = new HashMap();
+
+                // chagne status to sending
+                String status = "Sending";
+                ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId, status);
+
+                // get data from db
+                data.put("public_key", mReport.getPubKey());
+                data.put("report_id", mReportId);
+                data.put("type", mReport.getTitle());
+                data.put("urgency", mReport.getUrgency());
+                data.put("timestamp", mReport.getTimestamp());
+                data.put("location", mReport.getLocation());
+                data.put("description", mReport.getDescription());
+                data.put("is_anonymous", mReport.isAnon() + "");
+                data.put("is_resp_emp", mReport.getIsResp());
+                data.put("follow_up_enabled", mReport.getIsFollowup());
+
+                // TODO: currently there is no way to include images in resend
+                ArrayList<String > mImagePathList = new ArrayList<>();
+
+                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList, mReport.isAnon());
+
+            } catch (Exception e) {
+                return false;
+            }
+            return true;
+        }
     }
 
     // source: http://stackoverflow.com/questions/4457492/how-do-i-use-the-simple-http-client-in-android

@@ -11,10 +11,12 @@
         android:id="@+id/toolbar_main"
         android:layout_width="match_parent"
         android:layout_height="56dp"
-        android:layout_marginRight="12dp"
-        android:background="@color/colorActionBar"
+        android:paddingRight="12dp"
+        android:paddingTop="3dp"
         app:theme="@style/ThemeOverlay.AppCompat.Light"
-        android:layout_alignParentTop="true">
+        android:layout_alignParentTop="true"
+        android:background="@drawable/border_bottom"
+        android:layout_centerVertical="true">
 
         <ImageButton
             android:layout_width="50dp"

@@ -176,6 +176,12 @@ public class ReportTabFragment extends Fragment {
         return v;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        mToolbar.setVisibility(View.INVISIBLE);
+    }
+
     public HttpClient getNewHttpClient() {
 
         Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()

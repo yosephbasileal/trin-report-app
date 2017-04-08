@@ -24,6 +24,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.ApplicationContext;
+import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
@@ -109,6 +110,12 @@ public class EmergencyTabFragment extends Fragment {
         });
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mToolbar.setVisibility(View.INVISIBLE);
     }
 
     private void notifyEmergency() {

@@ -503,7 +503,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                         mProgressDialog.dismiss();
                         AddReportActivity.this.finish();
                     }
-                }, 5000);
+                }, 3000);
             }
         }
 
@@ -547,6 +547,17 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 data.put("is_anonymous", mIsAnonymous + "");
                 data.put("is_resp_emp", mResEmployeeChecked + "");
                 data.put("follow_up_enabled", mFollowupEnabled + "");
+
+                // save report form to db
+                ChatBook.getChatBook(getApplicationContext()).addReportForm(
+                        reportId,
+                        mUrgency,
+                        timestamp,
+                        mLocation,
+                        mDescription,
+                        mResEmployeeChecked + "",
+                        mFollowupEnabled + ""
+                );
 
                 SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList, mIsAnonymous);
 

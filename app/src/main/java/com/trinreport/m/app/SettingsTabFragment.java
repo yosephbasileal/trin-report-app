@@ -8,6 +8,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -55,6 +56,12 @@ public class SettingsTabFragment extends PreferenceFragment
 
         bindPreferenceSummaryToValue(findPreference("notifications"));
 
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mToolbar.setVisibility(View.VISIBLE);
     }
 
     private void bindPreferenceSummaryToValue(Preference preference) {

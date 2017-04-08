@@ -30,7 +30,13 @@ public class ChatDbHelper extends SQLiteOpenHelper {
                     ChatDbContract.ReportEntry.COLUMN_PUBLIC_KEY + " TEXT," +
                     ChatDbContract.ReportEntry.COLUMN_DATE_CREATED + " INTEGER," +
                     ChatDbContract.ReportEntry.COLUMN_IS_ANON + " TEXT," +
-                    ChatDbContract.ReportEntry.COLUMN_STATUS + " TEXT)";
+                    ChatDbContract.ReportEntry.COLUMN_STATUS + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_URGENCY + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_TIMESTAMP + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_LOCATION + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_DESCRIPTION + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_IS_RESP + " TEXT," +
+                    ChatDbContract.ReportEntry.COLUMN_IS_FOLLOWUP + " TEXT)";
 
 
     private static final String SQL_DELETE_MESSAGES =

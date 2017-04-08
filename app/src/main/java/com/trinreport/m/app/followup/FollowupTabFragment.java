@@ -120,6 +120,7 @@ public class FollowupTabFragment extends Fragment {
         // updates threads data from server
         //getFollowUpThreads();
         //new GetReportList2().execute();
+        mToolbar.setVisibility(View.VISIBLE);
         mDeleteAllButton.setVisibility(View.VISIBLE);
         mRefreshButton.setVisibility(View.VISIBLE);
         updateReportsList();
