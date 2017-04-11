@@ -49,12 +49,10 @@ public class Emergency extends AppCompatActivity {
     // constants
     private static final String TAG = "EmergencyActivity";
     public static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORT_ID";
-    public static final String EMERGENCY_STATUS = "com.trinreport.m.app.extra.STATUS";
-    public static final String EMERGENCY_STATUS_FILTER = "com.trinreport.m.app.action.new_status";
     private static final String CS_PHONE_NUMBER = "8602972222";
     private static final int UPDATE_FREQUENCY = 5000; // 5 seconds
 
-    // layour references
+    // layout references
     private Toolbar mToolbar;
     private TextView mStatusTextview;
     private LinearLayout mExplanationLayout;
@@ -75,9 +73,14 @@ public class Emergency extends AppCompatActivity {
     // variables
     private String mExplanation;
     private String mReportId;
-    private Boolean mReceieved = false;
-    private Boolean mCanCallMe = true;
+    private Boolean mReceieved;
+    private Boolean mCanCallMe;
     private String mAdminPublicKey;
+
+    public Emergency() {
+        mReceieved = false;
+        mCanCallMe = true;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +111,6 @@ public class Emergency extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
-
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -119,11 +121,11 @@ public class Emergency extends AppCompatActivity {
         // get report id from intent
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
 
-        // initialize status to not recieved
+        // initialize status to not received
         updateStatus();
 
         // start background task to request update every 5 seconds
-        callAsynchronousTask();
+        startBackgroundUpdate();
 
         // add listener to text field for adding explanation about emergency situation
         mExplanationEditText.addTextChangedListener(new TextWatcher() {
@@ -180,7 +182,8 @@ public class Emergency extends AppCompatActivity {
                     startActivity(intent);
                 }
                 catch (SecurityException e) {
-
+                    Toast.makeText(getApplicationContext(), "Something went wrong! Try again.",
+                            Toast.LENGTH_LONG).show();
                 }
             }
         });
@@ -221,7 +224,10 @@ public class Emergency extends AppCompatActivity {
         }
     }
 
-    public void callAsynchronousTask() {
+    /**
+     * Creates a background thread that sends gps location and queries rddp for updated status
+     */
+    public void startBackgroundUpdate() {
         mHandler = new Handler();
         mTimer = new Timer();
         TimerTask doAsynchronousTask = new TimerTask() {
@@ -231,7 +237,7 @@ public class Emergency extends AppCompatActivity {
                     public void run() {
                         try {
                             mLocation = mGpsTracker.getLocation();
-                            getEmergencyStatus();
+                            updateEmergencyStatus();
                         } catch (Exception e) {
                             // TODO Auto-generated catch block
                         }
@@ -243,13 +249,17 @@ public class Emergency extends AppCompatActivity {
         mTimer.schedule(doAsynchronousTask, 0, UPDATE_FREQUENCY);
     }
 
+    /**
+     * Sends emergency explanation to rddp server
+     */
     private void sendExplanation() {
         // get url
         String url = URL.SEND_EMERGENCY_EXPLANATION;
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
@@ -269,7 +279,8 @@ public class Emergency extends AppCompatActivity {
 
                 // encrypt data
                 try {
-                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation,
+                            mAdminPublicKey);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
@@ -287,13 +298,17 @@ public class Emergency extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
+    /**
+     * Sends "can receive phone call" status to rddp server
+     */
     private void updateCallmeCheckbox() {
         // get url
         String url = URL.EMERGENCY_CALLME_CHECKBOX;
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
@@ -318,7 +333,10 @@ public class Emergency extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
-    private void getEmergencyStatus() {
+    /**
+     * Sends GPS location and receives status updates from rddp server
+     */
+    private void updateEmergencyStatus() {
         // get url
         String url = URL.CHECK_EMERGENCY_STATUS;
 
@@ -355,8 +373,10 @@ public class Emergency extends AppCompatActivity {
 
                 // encrypt data
                 try {
-                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
-                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude,
+                            mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude,
+                            mAdminPublicKey);
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());

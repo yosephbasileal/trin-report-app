@@ -16,7 +16,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
-
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -24,7 +23,6 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.trinreport.m.app.ApplicationContext;
-import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.URL;
@@ -48,7 +46,7 @@ public class EmergencyTabFragment extends Fragment {
     private Button mEmergencyButton;
     private Toolbar mToolbar;
 
-    // other refernces
+    // other references
     private Location mLocation;
     private GPSTracker mGpsTracker;
     private SharedPreferences mSharedPrefs;
@@ -63,29 +61,26 @@ public class EmergencyTabFragment extends Fragment {
         return fragment;
     }
 
-    public EmergencyTabFragment() {
-        // empty constructor
-    }
-
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // inflate the layout for this fragment
         View v = inflater.inflate(R.layout.fragment_emergency_tab, container, false);
 
+        // get references
         mSharedPrefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         mEmergencyButton = (Button) v.findViewById(R.id.button_emergency);
-
         mAdminPublicKey = mSharedPrefs.getString("admin_public_key", "");
-
         mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
+        mGpsTracker = new GPSTracker(getActivity());
+
+        // setup toolbar
         if (mToolbar != null) {
             ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
             ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("");
         }
 
         // initialize gps tracker
-        mGpsTracker = new GPSTracker(getActivity());
         if(!mGpsTracker.canGetLocation()) {
             mGpsTracker.showSettingsAlert();
         }
@@ -115,9 +110,23 @@ public class EmergencyTabFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
+        // hide toolbar on this page
         mToolbar.setVisibility(View.GONE);
     }
 
+    /**
+     * Wrapper for starting EmergencyActivity when button is pressed
+     * @param report_id id assigned to current report by rddp server
+     */
+    private void startEmergencyActivity(String report_id) {
+        Intent i = new Intent(getActivity(), Emergency.class);
+        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
+        startActivity(i);
+    }
+
+    /**
+     * Sends emergency request to rddp server, send user data and gps location
+     */
     private void notifyEmergency() {
         // get url
         String url = URL.SEND_EMERGENCY_REQUEST;
@@ -161,18 +170,26 @@ public class EmergencyTabFragment extends Fragment {
                 String dorm = mSharedPrefs.getString("userdorm", "n/a");
                 String longitude = String.valueOf(mLocation.getLongitude());
                 String latitude = String.valueOf(mLocation.getLatitude());
-                String explanation = "N/A"; // to be sent later from Emergecy activity
+                String explanation = "N/A"; // to be sent later from Emergency activity
 
                 // encrypt data
                 try {
-                    name = ApplicationContext.getInstance().encryptForAdmin(name, mAdminPublicKey);
-                    phone = ApplicationContext.getInstance().encryptForAdmin(phone, mAdminPublicKey);
-                    userid = ApplicationContext.getInstance().encryptForAdmin(userid, mAdminPublicKey);
-                    email = ApplicationContext.getInstance().encryptForAdmin(email, mAdminPublicKey);
-                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm, mAdminPublicKey);
-                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude, mAdminPublicKey);
-                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude, mAdminPublicKey);
-                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
+                    name = ApplicationContext.getInstance().encryptForAdmin(name,
+                            mAdminPublicKey);
+                    phone = ApplicationContext.getInstance().encryptForAdmin(phone,
+                            mAdminPublicKey);
+                    userid = ApplicationContext.getInstance().encryptForAdmin(userid,
+                            mAdminPublicKey);
+                    email = ApplicationContext.getInstance().encryptForAdmin(email,
+                            mAdminPublicKey);
+                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm,
+                            mAdminPublicKey);
+                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude,
+                            mAdminPublicKey);
+                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude,
+                            mAdminPublicKey);
+                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation,
+                            mAdminPublicKey);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
                     e.printStackTrace();
@@ -196,11 +213,5 @@ public class EmergencyTabFragment extends Fragment {
 
         // add to queue
         requestQueue.add(stringRequest);
-    }
-
-    private void startEmergencyActivity(String report_id) {
-        Intent i = new Intent(getActivity(), Emergency.class);
-        i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
-        startActivity(i);
     }
 }
