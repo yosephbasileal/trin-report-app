@@ -47,7 +47,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Provide your trincoll.edu address"
+                android:text="Enter your Trinity email"
                 android:textSize="24sp"
                 android:textAlignment="center"/>
             <TextView
@@ -67,7 +67,7 @@
                 app:backgroundTint="@color/colorAccent"
                 android:textAlignment="center"
                 android:focusable="true"
-                android:hint="Enter you @trincoll.edu email"/>
+                android:hint=" @trincoll.edu address"/>
             <TextView
                 android:id="@+id/error_request"
                 android:layout_width="wrap_content"

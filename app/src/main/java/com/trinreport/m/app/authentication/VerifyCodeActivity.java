@@ -35,7 +35,7 @@ import java.util.Map;
 
 /**
  * In this page, user enters the verification code they
- * recieved through email
+ * receive through email
  */
 public class VerifyCodeActivity extends AppCompatActivity {
 
@@ -51,6 +51,9 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
     // other preferences
     SharedPreferences mSharedPref;
+
+    // variables
+    private String mPrivateKeyPem;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -139,20 +142,14 @@ public class VerifyCodeActivity extends AppCompatActivity {
      * @param auth_token token received form authentication server
      */
     private void authenticate(String auth_token) {
-        String name = "auth_token";
-
         try {
             // generate RSA keys
             KeyPair keyPair = RSA.generateRsaKeyPair(2048);
             String privateKeyPem = RSA.createStringFromPrivateKey(keyPair.getPrivate());
             String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
 
-            // save auth token to key
-            SharedPreferences.Editor editor = mSharedPref.edit();
-            editor.putString(name, auth_token); // save auth token
-            editor.putBoolean("authenticated", true); // authenticate user
-            editor.putString("private_key", privateKeyPem); // save private key
-            editor.commit();
+            // keep reference to private key, will be save in shared prefs later on
+            mPrivateKeyPem = privateKeyPem;
 
             // publish public key pem to server
             publishPublicKey(auth_token, publicKeyPem);
@@ -234,7 +231,8 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
@@ -247,6 +245,9 @@ public class VerifyCodeActivity extends AppCompatActivity {
                     // save admin public key shared prefs
                     SharedPreferences.Editor editor = mSharedPref.edit();
                     editor.putString("admin_public_key", publicKeyPem);
+                    editor.putString("auth_token", auth_token); // save auth token
+                    editor.putBoolean("authenticated", true); // authenticate user
+                    editor.putString("private_key", mPrivateKeyPem); // save private key
                     Log.d(TAG, "Key pem: " + publicKeyPem);
                     editor.apply();
 
@@ -265,6 +266,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
                 Log.d(TAG, "Volley Error: " + error.toString());
                 Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
                         Toast.LENGTH_LONG).show();
+                showError("Something went wrong! Try again.");
                 hideLoadingMarker();
             }
         }) {

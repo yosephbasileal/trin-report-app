@@ -77,7 +77,6 @@ public class Emergency extends AppCompatActivity {
     private String mReportId;
     private Boolean mReceieved = false;
     private Boolean mCanCallMe = true;
-
     private String mAdminPublicKey;
 
     @Override
