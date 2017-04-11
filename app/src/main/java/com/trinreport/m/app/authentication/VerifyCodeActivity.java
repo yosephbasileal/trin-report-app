@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * In this page, user enters the verif code they they
+ * In this page, user enters the verification code they
  * recieved through email
  */
 public class VerifyCodeActivity extends AppCompatActivity {
@@ -118,16 +118,26 @@ public class VerifyCodeActivity extends AppCompatActivity {
         startActivity(i);
     }
 
+    /**
+     * Shows loading marker next to the submit button
+     */
     private void showLoadingMarker() {
         mVerifyTokenButton.setEnabled(false);
         mLoadingMarker.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Hides loading marker next to the submit button
+     */
     private void hideLoadingMarker() {
         mVerifyTokenButton.setEnabled(true);
         mLoadingMarker.setVisibility(View.INVISIBLE);
     }
 
+    /**
+     * Saves authentication token, creates RSA keys and publishes public key to RDDP
+     * @param auth_token token received form authentication server
+     */
     private void authenticate(String auth_token) {
         String name = "auth_token";
 
@@ -154,6 +164,11 @@ public class VerifyCodeActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sends verification code to authentication server for verification
+     * @param verif_code code entered by user
+     * @param auth_user_id user id assigned in RequestTokenActivity
+     */
     private void verifyCode(final String verif_code, final String auth_user_id) {
         // get url
         String url = URL.VERIFY_AUTH_CODE;
@@ -208,6 +223,11 @@ public class VerifyCodeActivity extends AppCompatActivity {
         showLoadingMarker();
     }
 
+    /**
+     * Publishes public key of user to RDDP server
+     * @param auth_token token assigned by authentication server
+     * @param publicKey public key generated locally
+     */
     private void publishPublicKey(final String auth_token, final String publicKey) {
         // get url
         String url = URL.PUBLISH_PUBLIC_KEY;

@@ -7,7 +7,6 @@
     android:layout_margin="24dp"
     android:orientation="vertical"
     android:gravity="center">
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -19,21 +18,18 @@
             android:layout_margin="16dp"
             android:src="@drawable/trin_logo"/>
     </FrameLayout>
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="vertical"
         android:gravity="center_horizontal">
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/app_name"
+            android:text="TrinReport"
             android:id="@+id/app_title"
             android:textSize="36sp"/>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -41,7 +37,6 @@
             android:text="Feel safe at any corner on Trinity's campus!"
             android:id="@+id/app_moto"
             android:textSize="18sp"/>
-
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -55,8 +50,4 @@
             android:id="@+id/get_started_button"
             android:layout_gravity="center_horizontal" />
     </LinearLayout>
-
-
-
-
 </LinearLayout>
