@@ -43,12 +43,12 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".authentication.RequestTokenActivity"
-            android:noHistory="true"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
         <activity
             android:name=".authentication.VerifyCodeActivity"
-            android:noHistory="true"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize|stateHidden"/>
         <activity
             android:name=".report.AddReportActivity"
             android:parentActivityName=".MainActivity"

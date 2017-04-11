@@ -274,6 +274,8 @@ public class Emergency extends AppCompatActivity {
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
                 }
 
                 MyData.put("emergency_id", mReportId);
@@ -359,6 +361,8 @@ public class Emergency extends AppCompatActivity {
 
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
                 }
 
                 // add data to hashmap

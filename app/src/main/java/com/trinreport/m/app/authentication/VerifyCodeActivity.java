@@ -5,10 +5,13 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -21,6 +24,7 @@ import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
+import com.trinreport.m.app.utils.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,6 +45,9 @@ public class VerifyCodeActivity extends AppCompatActivity {
     // layout references
     private EditText mVerifCodeText;
     private Button mVerifyTokenButton;
+    private Toolbar mToolbar;
+    private TextView mErrorText;
+    private ProgressBar mLoadingMarker;
 
     // other preferences
     SharedPreferences mSharedPref;
@@ -56,6 +63,24 @@ public class VerifyCodeActivity extends AppCompatActivity {
         mSharedPref =  PreferenceManager.getDefaultSharedPreferences(this);
         mVerifyTokenButton = (Button) findViewById(R.id.verify_code_button);
         mVerifCodeText = (EditText) findViewById(R.id.verification_code);
+        mToolbar = (Toolbar) findViewById(R.id.toolbar_verify);
+        mErrorText = (TextView) findViewById(R.id.error_verify);
+        mLoadingMarker = (ProgressBar) findViewById(R.id.marker_progress_verify);
+
+        // setup toolbar back button
+        setSupportActionBar(mToolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayShowHomeEnabled(true);
+        getSupportActionBar().setTitle("");
+        mToolbar.setNavigationIcon(R.drawable.ic_arrow_back_black_24dp);
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                finish();
+                onBackPressed();
+            }
+        });
+
 
         // add listener to verify token button
         mVerifyTokenButton.setOnClickListener(new View.OnClickListener() {
@@ -63,15 +88,44 @@ public class VerifyCodeActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // send code to authentication server for verification
                 String verif_code = mVerifCodeText.getText().toString();
+                // check if a valid email address
+                if (!Utilities.validateCode(verif_code)) {
+                    showError("Invalid code! Try again.");
+                    return;
+                }
+
                 String auth_user_id = mSharedPref.getString("auth_user_id", "");
                 verifyCode(verif_code, auth_user_id);
             }
         });
     }
 
+    /**
+     * Shows error under edit text view
+     * @param error error message to show
+     */
+    private void showError(String error) {
+        mErrorText.setText(error);
+    }
+
+    /**
+     * Wrapper for starting main activity
+     */
     private void startMainActivity() {
         Intent i = new Intent(this, MainActivity.class);
+        // clear application history stack
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
+    }
+
+    private void showLoadingMarker() {
+        mVerifyTokenButton.setEnabled(false);
+        mLoadingMarker.setVisibility(View.VISIBLE);
+    }
+
+    private void hideLoadingMarker() {
+        mVerifyTokenButton.setEnabled(true);
+        mLoadingMarker.setVisibility(View.INVISIBLE);
     }
 
     private void authenticate(String auth_token) {
@@ -94,6 +148,9 @@ public class VerifyCodeActivity extends AppCompatActivity {
             publishPublicKey(auth_token, publicKeyPem);
         } catch (Exception e) {
             Log.d(TAG, "Exception: " + e.toString());
+            e.printStackTrace();
+            hideLoadingMarker();
+            showError("Something went wrong. Try again!");
         }
     }
 
@@ -111,15 +168,20 @@ public class VerifyCodeActivity extends AppCompatActivity {
                 try {
                     // get auth token assigned by authentication server
                     JSONObject jsonObj = new JSONObject(response);
-                    String auth_token = jsonObj.get("auth_token").toString();
-
-                    // save authentication info in shared prefs, also generates RSA keys
-                    authenticate(auth_token);
-
-                    // open main activity of the app
-                    startMainActivity();
+                    boolean error = jsonObj.getBoolean("error");
+                    if(!error) {
+                        String auth_token = jsonObj.getString("auth_token");
+                        // save authentication info in shared prefs, also generates RSA keys
+                        authenticate(auth_token);
+                    } else {
+                        String message = jsonObj.getString("message");
+                        showError(message);
+                        hideLoadingMarker();
+                    }
                 } catch (Exception e) {
                     Log.d(TAG, "Exception: " + e.toString());
+                    hideLoadingMarker();
+                    showError("Something went wrong! Try again.");
                 }
 
             }
@@ -129,6 +191,8 @@ public class VerifyCodeActivity extends AppCompatActivity {
                 Log.d(TAG, "Volley Error: " + error.toString());
                 Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
                         Toast.LENGTH_LONG).show();
+                hideLoadingMarker();
+                showError("Something went wrong! Try again.");
             }
         }) {
             protected Map<String, String> getParams() {
@@ -141,6 +205,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
 
         // add to queue
         requestQueue.add(stringRequest);
+        showLoadingMarker();
     }
 
     private void publishPublicKey(final String auth_token, final String publicKey) {
@@ -165,8 +230,13 @@ public class VerifyCodeActivity extends AppCompatActivity {
                     Log.d(TAG, "Key pem: " + publicKeyPem);
                     editor.apply();
 
+                    // open main activity of the app
+                    hideLoadingMarker();
+                    startMainActivity();
+
                 } catch (JSONException e) {
                     Log.d(TAG, e.getMessage());
+                    showError("Something went wrong! Try again.");
                 }
             }
         }, new Response.ErrorListener() {
@@ -175,6 +245,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
                 Log.d(TAG, "Volley Error: " + error.toString());
                 Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
                         Toast.LENGTH_LONG).show();
+                hideLoadingMarker();
             }
         }) {
             protected Map<String, String> getParams() {

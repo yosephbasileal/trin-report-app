@@ -115,7 +115,7 @@ public class EmergencyTabFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mToolbar.setVisibility(View.INVISIBLE);
+        mToolbar.setVisibility(View.GONE);
     }
 
     private void notifyEmergency() {
@@ -153,6 +153,7 @@ public class EmergencyTabFragment extends Fragment {
                 Map<String, String> MyData = new HashMap<>();
 
                 // get user data from shared preferences
+                String auth_token = mSharedPrefs.getString("auth_token", "n/a");
                 String name = mSharedPrefs.getString("username", "n/a");
                 String phone = mSharedPrefs.getString("userphone", "n/a");
                 String userid = mSharedPrefs.getString("userid", "n/a");
@@ -174,9 +175,12 @@ public class EmergencyTabFragment extends Fragment {
                     explanation = ApplicationContext.getInstance().encryptForAdmin(explanation, mAdminPublicKey);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
+                    e.printStackTrace();
+                    return null;
                 }
 
                 // add data to hashmap
+                MyData.put("authtoken", auth_token);
                 MyData.put("username", name);
                 MyData.put("userphone", phone);
                 MyData.put("userid", userid);

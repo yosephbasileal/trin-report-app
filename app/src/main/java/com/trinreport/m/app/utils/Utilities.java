@@ -14,7 +14,8 @@ import java.util.regex.PatternSyntaxException;
  * Created by bimana2 on 11/5/16.
  */
 public class Utilities {
-    public static boolean validate_email(String email, String domain) {
+    public static boolean validateEmail(String email) {
+        String domain = "trincoll.edu";
         String[] t;
         String delimiter = "@";
 
@@ -27,6 +28,17 @@ public class Utilities {
             return false;
         } catch (ArrayIndexOutOfBoundsException e) {
             // return false
+            return false;
+        }
+    }
+
+    public static boolean validateCode(String code) {
+        int min = 0;
+        int max = 999998;
+        try {
+            int codeInt = Integer.parseInt(code);
+            return (codeInt > min) && (codeInt < max);
+        } catch (Exception e) {
             return false;
         }
     }

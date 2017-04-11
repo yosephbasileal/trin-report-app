@@ -179,7 +179,7 @@ public class ReportTabFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        mToolbar.setVisibility(View.INVISIBLE);
+        mToolbar.setVisibility(View.GONE);
     }
 
     public HttpClient getNewHttpClient() {

@@ -7,9 +7,9 @@ package com.trinreport.m.app;
 public class URL {
 
     // domains
-    public static String AUTH_SERVER_DOMAIN = "http://trinreport.appspot.com";
+    public static String AUTH_SERVER_DOMAIN = "https://trinreport.appspot.com";
     //public static String RDDP_SERVER_DOMAIN = "https://trinreport.com";
-    public static String RDDP_SERVER_DOMAIN = "http://ec290e51.ngrok.io";
+    public static String RDDP_SERVER_DOMAIN = "https://ec290e51.ngrok.io";
 
     // authentication urls
     public static String REQUEST_AUTH_TOKEN = AUTH_SERVER_DOMAIN + "/request";
