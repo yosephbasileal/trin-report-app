@@ -54,7 +54,7 @@ public class SettingsTabFragment extends PreferenceFragment
         bindPreferenceSummaryToValue(findPreference("useremail"));
         bindPreferenceSummaryToValue(findPreference("userdorm"));
 
-        bindPreferenceSummaryToValue(findPreference("notifications"));
+        //bindPreferenceSummaryToValue(findPreference("notifications"));
 
     }
 

@@ -29,7 +29,10 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
@@ -47,7 +50,8 @@ import java.util.Date;
 import java.util.HashMap;
 
 
-public class AddReportActivity extends AppCompatActivity implements  DatePickerFragment.OnCompleteDateListener, TimePickerFragment.OnCompleteTimeListener{
+public class AddReportActivity extends AppCompatActivity implements
+        DatePickerFragment.OnCompleteDateListener, TimePickerFragment.OnCompleteTimeListener{
 
     // constants
     private static final String TAG = "AddReportFragment";
@@ -56,6 +60,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
     private static final int REQUEST_IMAGE_UPLOAD = 3;
+    private static final int MAX_NUM_IMAGES = 3;
 
     // layout references
     private Toolbar mToolbar;
@@ -71,6 +76,8 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private Button mSubmitbutton;
     private RecyclerView mPhotoRecyclerView;
     private ProgressDialog mProgressDialog;
+    private ProgressBar mLoadingMarker;
+    private TextView mErrorText;
 
     // other references
     private RecyclerView.Adapter mAdapter;
@@ -88,12 +95,14 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
     // other variables
     private ArrayList<String> mImagePathList;
+    private String mReportId;
 
 
     /**
      * Constructor
      */
     public AddReportActivity() {
+        mReportId = "";
         mUrgency = "medium";
         mDate = new Date();
         mLocation = "n/a";
@@ -123,6 +132,8 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mResEmployeeCheckbox = (CheckBox) findViewById(R.id.checkbox_responsible);
         mSubmitbutton = (Button) findViewById(R.id.button_submit);
         mPhotoRecyclerView = (RecyclerView) findViewById(R.id.images_recycler_view);
+        mLoadingMarker = (ProgressBar) findViewById(R.id.marker_submit_report);
+        mErrorText = (TextView) findViewById(R.id.error_report);
 
         // setup toolbar
         if (mToolbar != null) {
@@ -283,6 +294,12 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         });
     }
 
+    /**
+     * Fires when activities started for result send data
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode != RESULT_OK) {
@@ -300,13 +317,40 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             mDate = date;
             updateDate();
         }
-        if (requestCode == REQUEST_IMAGE_UPLOAD && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == REQUEST_IMAGE_UPLOAD
+                && resultCode == RESULT_OK
+                && data != null
+                && data.getData() != null) {
 
             Uri uri = data.getData();
             String path = getRealPathFromURI_API11to18(this, uri);
             mImagePathList.add(path);
             mAdapter.notifyDataSetChanged();
         }
+    }
+
+    /**
+     * Shows loading marker next to the submit button
+     */
+    private void showLoadingMarker() {
+        mSubmitbutton.setEnabled(false);
+        mLoadingMarker.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Hides loading marker next to the submit button
+     */
+    private void hideLoadingMarker() {
+        mSubmitbutton.setEnabled(true);
+        mLoadingMarker.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Shows error under edit text view
+     * @param error error message to show
+     */
+    private void showError(String error) {
+        mErrorText.setText(error);
     }
 
     /**
@@ -349,7 +393,8 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private void dispathUploadPictureIntent() {
         Intent uploadPictureIntent = new Intent(Intent.ACTION_GET_CONTENT);
         uploadPictureIntent.setType("image/*");
-        startActivityForResult(Intent.createChooser(uploadPictureIntent, "Select Picture"), REQUEST_IMAGE_UPLOAD);
+        startActivityForResult(Intent.createChooser(uploadPictureIntent, "Select Picture"),
+                REQUEST_IMAGE_UPLOAD);
     }
 
     /**
@@ -456,6 +501,12 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 mItemImageView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        if(mImagePathList.size() -1 >= MAX_NUM_IMAGES) {
+                            Toast.makeText(getApplicationContext(),
+                                    "A maximum of " + MAX_NUM_IMAGES + " images allowed",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         dispathUploadPictureIntent();
                     }
                 });
@@ -499,27 +550,27 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     }
 
 
-
+    /**
+     * Background task for preparing to send report to rddp service
+     */
     public class PrepareSendTask extends AsyncTask<String, Void, Boolean> {
 
         protected void onPreExecute() {
-            mProgressDialog = new ProgressDialog(AddReportActivity.this);
-            mProgressDialog.setIndeterminate(true);
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.setMessage("Please wait...");
-            mProgressDialog.show();
+            showLoadingMarker();
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
+            hideLoadingMarker();
             if(success) {
-                mProgressDialog.dismiss();
-                mProgressDialog = null;
+                /*mProgressDialog.dismiss();
+                mProgressDialog = null;*/
                 mProgressDialog = new ProgressDialog(AddReportActivity.this);
                 mProgressDialog.setIndeterminate(true);
-                mProgressDialog.setMessage("Your report is being sent. Check Followup tab for updates");
+                mProgressDialog.setMessage("Report is being sent. Check followup tab for updates");
                 mProgressDialog.setCancelable(false);
-                mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+                mProgressDialog.setIndeterminateDrawable(getResources().
+                        getDrawable(R.drawable.ic_check_black_24dp));
                 mProgressDialog.show();
                 new Handler().postDelayed(new Runnable() {
 
@@ -529,6 +580,11 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                         AddReportActivity.this.finish();
                     }
                 }, 3000);
+            } else {
+                // show error
+                showError("Something when wrong! Try again.");
+                // delete report from db if created
+                ChatBook.getChatBook(getApplicationContext()).deleteReport(mReportId);
             }
         }
 
@@ -542,13 +598,13 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
 
                 // generate cookie
-                String reportId = generateThreadID();
+                mReportId = generateThreadID();
 
                 // save in local db
                 String is_anon = (mIsAnonymous)? "1": "0";
                 String status = "Sending";
                 ChatBook.getChatBook(getApplicationContext()).addReport(
-                        new Report(reportId,
+                        new Report(mReportId,
                                 privateKeyPem,
                                 mType,
                                 publicKeyPem,
@@ -557,7 +613,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
                 // add keys to hashmap
                 data.put("public_key", publicKeyPem);
-                data.put("report_id", reportId);
+                data.put("report_id", mReportId);
 
                 // format date
                 Format formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
@@ -575,7 +631,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
                 // save report form to db
                 ChatBook.getChatBook(getApplicationContext()).addReportForm(
-                        reportId,
+                        mReportId,
                         mUrgency,
                         timestamp,
                         mLocation,
@@ -584,9 +640,12 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                         mFollowupEnabled + ""
                 );
 
-                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList, mIsAnonymous);
+                // start service to send report
+                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList,
+                        mIsAnonymous);
 
             } catch (Exception e) {
+                e.printStackTrace();
                 return false;
             }
             return true;

@@ -37,7 +37,7 @@
             android:layout_marginStart="14dp"
             android:layout_marginTop="10dp"
             android:id="@+id/statusTextView"
-            android:text="Not Received"
+            android:text="Pending"
             android:textColor="#ff0000"
             android:textSize="50sp"/>
         <TextView
@@ -51,23 +51,26 @@
         <LinearLayout
             android:id="@+id/explanation_layout"
             android:layout_width="match_parent"
-            android:layout_height="55dp"
+            android:layout_height="48dp"
             android:layout_marginLeft="14dp"
             android:layout_marginRight="14dp">
-            <EditText
+            <android.support.v7.widget.AppCompatEditText
                 android:id="@+id/explanation"
                 android:layout_weight="4"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:inputType="text"
-                android:maxLines="1"/>
+                android:maxLines="1"
+                app:backgroundTint="@color/colorAccent"
+                android:maxLength="30"/>
             <Button
                 android:id="@+id/send_explanation"
                 android:layout_weight="1"
                 android:layout_width="0dp"
-                android:layout_height="wrap_content"
+                android:layout_height="match_parent"
                 android:background="@color/colorAccent"
-                android:text="Send"/>
+                android:text="Send"
+                android:textStyle="bold"/>
         </LinearLayout>
         <TextView
             android:id="@+id/explanation_sent_textview"
@@ -94,8 +97,7 @@
             android:layout_marginLeft="14dp"
             android:layout_marginRight="14dp"
             android:textSize="18sp"
-            android:buttonTint="@color/colorAccent"
-            android:checked="true"/>
+            app:buttonTint="@color/colorAccent"/>
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -111,7 +113,8 @@
             android:layout_marginLeft="14dp"
             android:layout_marginRight="14dp"
             android:background="@color/colorAccent"
-            android:text="Call Campus Safety"/>
+            android:text="Call Campus Safety"
+            android:textStyle="bold"/>
 
     </LinearLayout>
 </LinearLayout>

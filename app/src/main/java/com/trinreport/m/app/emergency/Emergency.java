@@ -207,6 +207,7 @@ public class Emergency extends AppCompatActivity {
         // cancel background update thread
         mHandler.removeCallbacks(mRunnable);
         mTimer.cancel();
+        markAsDone();
         super.onDestroy();
     }
 
@@ -387,6 +388,40 @@ public class Emergency extends AppCompatActivity {
                 // add data to hashmap
                 MyData.put("longitude", longitude);
                 MyData.put("latitude", latitude);
+                MyData.put("emergency_id", mReportId);
+                return MyData;
+            }
+        };
+
+        // add to queue
+        requestQueue.add(stringRequest);
+    }
+
+    /**
+     * Marks emergency report as done (called when activity is destroyed)
+     */
+    private void markAsDone() {
+        // get url
+        String url = URL.MARK_EMERGENCY_AS_DONE;
+
+        // create request
+        RequestQueue requestQueue = Volley.newRequestQueue(this);
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        Log.d(TAG, "Volley Sucess: " + response);
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.d(TAG, "Volley Error: " + error.toString());
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
+            }
+        }) {
+            protected Map<String, String> getParams() {
+                Map<String, String> MyData = new HashMap<>();
                 MyData.put("emergency_id", mReportId);
                 return MyData;
             }

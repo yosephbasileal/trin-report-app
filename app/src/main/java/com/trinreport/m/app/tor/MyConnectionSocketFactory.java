@@ -13,7 +13,10 @@ import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 
 
-// source: https://github.com/jehy/Tor-Onion-Proxy-Library
+/**
+ * Tor connection socket library
+ * Source: https://github.com/jehy/Tor-Onion-Proxy-Library
+ */
 public class MyConnectionSocketFactory implements ConnectionSocketFactory {
 
     @Override
@@ -34,7 +37,8 @@ public class MyConnectionSocketFactory implements ConnectionSocketFactory {
         socket = new Socket();
         connectTimeout = 100000;
         socket.setSoTimeout(connectTimeout);
-        socket.connect(new InetSocketAddress(socksaddr.getHostName(), socksaddr.getPort()), connectTimeout);
+        socket.connect(new InetSocketAddress(socksaddr.getHostName(),
+                socksaddr.getPort()), connectTimeout);
 
 
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());

@@ -122,7 +122,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
     }
 
     /**
-     * Shows loading marker next to the submit button
+     * Shows loading marker next to the verify button
      */
     private void showLoadingMarker() {
         mVerifyTokenButton.setEnabled(false);
@@ -130,7 +130,7 @@ public class VerifyCodeActivity extends AppCompatActivity {
     }
 
     /**
-     * Hides loading marker next to the submit button
+     * Hides loading marker next to the verify button
      */
     private void hideLoadingMarker() {
         mVerifyTokenButton.setEnabled(true);

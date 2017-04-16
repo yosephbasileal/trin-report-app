@@ -34,10 +34,11 @@
         android:background="@drawable/border"
         android:paddingRight="8dp"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
         android:orientation="horizontal"
         android:layout_alignParentLeft="true"
-        android:paddingBottom="3dp"
+        android:paddingBottom="5dp"
         android:weightSum="3"
         android:gravity="center"
         android:layout_alignParentBottom="true">
@@ -49,9 +50,10 @@
             android:paddingRight="16dp"
             android:hint="Enter a message"
             android:layout_width="0dp"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:layout_weight="3"
-            android:maxLength="240"/>
+            android:maxLines="5"
+            android:maxLength="150"/>
 
         <FrameLayout
             android:layout_width="wrap_content"

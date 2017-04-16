@@ -19,5 +19,6 @@
         android:paddingRight="10dp"
         android:paddingTop="5dp"
         android:text="Sample"
-        android:textColor="#000" />
+        android:textColor="#000"
+        android:textIsSelectable="true"/>
 </LinearLayout>

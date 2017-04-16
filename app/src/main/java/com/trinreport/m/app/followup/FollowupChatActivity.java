@@ -44,6 +44,8 @@ import com.trinreport.m.app.report.AddReportActivity;
 import com.trinreport.m.app.report.SendReportService;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
+import com.trinreport.m.app.tor.Tor;
+import com.trinreport.m.app.utils.Utilities;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -81,81 +83,68 @@ import cz.msebera.android.httpclient.ssl.SSLContexts;
 
 public class FollowupChatActivity extends AppCompatActivity {
 
+    // constants
     private static final String TAG = "FollowupChatActivity";
     private static int MY_SOCKET_TIMEOUT_MS = 10000; // 10 seconds
-
     public static final String EXTRA_REPORT_ID = "com.trinreport.m.app.extra.REPORT_ID2";
     public static final String EXTRA_THREAD_TITLE = "com.trinreport.m.app.extra_THREAD_TITLE";
-
     private static final int VIEW_TYPE_LEFT = 0;
     private static final int VIEW_TYPE_RIGHT = 1;
 
-    private ListView mListView;
+    // layout references
     private EditText mChatText;
     private ImageButton mButtonSend;
     private ImageButton mButtonRefresh;
     private LinearLayout mNoticeButtons;
-
     private Button mButtonRetry;
     private Button mButtonView;
-
-
-    private boolean mSide = false;
-
     private RecyclerView mRecyclerView;
-    private RecyclerView.LayoutManager mLayoutManager;
-    private RecyclerView.Adapter mAdapter;
-
     private Toolbar mToolbar;
     private TextView mNotice;
     private LinearLayout mForm;
     private ProgressDialog mProgressDialog;
 
+    // variables
     private List<ChatMessage> mMessagesList = new ArrayList<>();
     private String mReportId;
     private Report mReport;
     private String mReportTitle;
-
-    SharedPreferences mSharedPref;
     private String mAdminPublicKey;
 
-    // tor client
+    // other references
+    private RecyclerView.LayoutManager mLayoutManager;
+    private RecyclerView.Adapter mAdapter;
+    private SharedPreferences mSharedPref;
+
+    // tor client references
     private HttpClient mHttpclient;
-    private boolean mTorInitialized;
     private HttpClientContext mHttpContext;
+    private OnionProxyManager mOnionProxyManager;
+    private boolean mTorReady;
+    private boolean mTorInitializing;
+
+    public FollowupChatActivity() {
+        mTorReady = false;
+        mTorInitializing = false;
+    }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        // infalte layout
         setContentView(R.layout.activity_followup_chat);
 
+        // get data from intent
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
         mReportTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
         mReport = ChatBook.getChatBook(this).getReport(mReportId);
-
         Log.d(TAG, "Report: " + mReport.toString());
 
+        // get references
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
         mAdminPublicKey = mSharedPref.getString("admin_public_key", "");
-
         mToolbar = (Toolbar) findViewById(R.id.toolbar_chat);
-
-        if (mToolbar != null) {
-            setSupportActionBar(mToolbar);
-            getSupportActionBar().setTitle(mReportTitle);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
-        }
-
-        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                onBackPressed();
-            }
-        });
-
         mNotice = (TextView) findViewById(R.id.chat_text_notice);
         mButtonSend = (ImageButton) findViewById(R.id.send);
         mButtonRefresh = (ImageButton) findViewById(R.id.refresh_chat);
@@ -166,14 +155,32 @@ public class FollowupChatActivity extends AppCompatActivity {
         mChatText = (EditText) findViewById(R.id.msg);
         mForm = (LinearLayout) findViewById(R.id.form);
 
+        // setup toolbar
+        if (mToolbar != null) {
+            setSupportActionBar(mToolbar);
+            getSupportActionBar().setTitle(mReportTitle);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
+        }
+        mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                onBackPressed();
+            }
+        });
 
+        // if report failed to send
         if(mReport.getStatus().equals("Failed to send")) {
+            // hide chat UI
             mButtonSend.setVisibility(View.GONE);
             mForm.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.GONE);
+
+            // show "not sent" message
             mNotice.setText("Your report was not sent successully. Try again!");
             mNoticeButtons.setVisibility(View.VISIBLE);
 
+            // add listener for retry button
             mButtonRetry.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
@@ -183,80 +190,87 @@ public class FollowupChatActivity extends AppCompatActivity {
             return;
         }
 
+        // if report is current being sent
         if(mReport.getStatus().equals("Sending")) {
+            // hide chat UI
             mButtonSend.setVisibility(View.GONE);
             mForm.setVisibility(View.GONE);
             mRecyclerView.setVisibility(View.GONE);
+
+            // show "being sent" message
             mNotice.setText("Your report is being processed to be sent. Check back later.");
             mNoticeButtons.setVisibility(View.INVISIBLE);
             return;
         }
 
-
-        getMessages();
-
+        // initialize adapter for displaying messages in recycler view
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         mRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new MessageAdapter();
         mRecyclerView.setAdapter(mAdapter);
+
+        // get messages from local db
         updateMessagesList();
 
+        // if report has been sent, get followup messages from rddp, if any, and store in local db
+        getMessagesFromServer();
 
+        // add listener to chat text view
         mChatText.setOnKeyListener(new View.OnKeyListener() {
             public boolean onKey(View v, int keyCode, KeyEvent event) {
                 if ((event.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
-                    return sendChatMessage();
+                    return prepareAndSend();
                 }
                 return false;
             }
         });
 
+        // add listener to refresh button
         mButtonRefresh.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getMessages();
+                // get updated data from rddp server and store in db
+                getMessagesFromServer();
             }
         });
 
+        // add listener to send message button
         mButtonSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View arg0) {
-                sendChatMessage();
+                prepareAndSend();
             }
         });
+    }
 
+    @Override
+    protected  void onStop() {
+        Log.d(TAG, "FollowupChat activity stopped");
+        try {
+            if(mOnionProxyManager != null)
+                mOnionProxyManager.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        super.onStop();
+    }
 
+    private void getMessagesFromServer() {
+        if(mReport.isAnon()) {
+            if(!mTorReady && !mTorInitializing) {
+                mTorInitializing = true;
+                InitializeTor job1 = new InitializeTor();
+                job1.execute();
+            }
+            GetMessagesThroughTor job = new GetMessagesThroughTor();
+            job.execute();
+        } else {
+            getMessages();
+        }
     }
 
     private void updateMessagesList() {
         new GetMessageList().execute();
-    }
-
-    private boolean sendChatMessage() {
-        // send to server
-        String content = mChatText.getText().toString();
-        /*if(!mReport.isAnon()) {
-            sendMessage(content);
-        } else {
-            initTor();
-            sendMessageThroughTor(content);
-        }*/
-
-        sendMessage(content);
-
-        // add to list
-        String fromAdmin = "0";
-        String timestamp = new Date().toString();
-        ChatMessage message = new ChatMessage(fromAdmin, content, timestamp, mReportId);
-        mMessagesList.add(message);
-        // save to local db
-        ChatBook.getChatBook(this).addMessage(message);
-        updateMessagesList();
-        // reset edit text
-        mChatText.setText("");
-        // scroll to bottom of screen
-        mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
-        return true;
     }
 
     private class MessageHolder extends RecyclerView.ViewHolder {
@@ -357,61 +371,128 @@ public class FollowupChatActivity extends AppCompatActivity {
         }
     }
 
+
+    private boolean prepareAndSend() {
+        // get message string
+        String content = mChatText.getText().toString();
+
+        // add to list
+        String fromAdmin = "0";
+        String timestamp = new Date().toString();
+        ChatMessage message = new ChatMessage(fromAdmin, content, timestamp, mReportId);
+        mMessagesList.add(message);
+
+        // save to local db
+        ChatBook.getChatBook(this).addMessage(message);
+        updateMessagesList();
+
+        // send to server
+        if(!mReport.isAnon()) {
+            sendMessage(content);
+        } else {
+            sendMessageThroughTor(content);
+        }
+
+        // reset edit text
+        mChatText.setText("");
+
+        // scroll to bottom of screen
+        mLayoutManager.scrollToPosition(mMessagesList.size() - 1);
+
+        return true;
+    }
+
+    /**
+     * Starts background task for resending report
+     */
+    private void resendReport() {
+        PrepareReSendTask job = new PrepareReSendTask();
+        job.execute();
+    }
+
+    /**
+     * Sends message through tor in the background
+     * @param message message to be sent
+     */
+    private void sendMessageThroughTor(String message) {
+        if(!mTorReady && !mTorInitializing) {
+            mTorInitializing = true;
+            InitializeTor job1 = new InitializeTor();
+            job1.execute();
+        }
+        MessageThroughTor job2 = new MessageThroughTor();
+        job2.execute(message);
+    }
+
+    /**
+     * Process received messages
+     */
+    private void processMessages(String response) {
+        try {
+            // get json object
+            JSONObject jsonObj = new JSONObject(response);
+
+            // get json array of messages
+            JSONArray jsonarray = jsonObj.getJSONArray("messages");
+
+            // delete existing messages
+            ChatBook.getChatBook(getApplicationContext()).deleteMessages(mReportId);
+
+            // add new messages to db
+            for (int j = 0; j < jsonarray.length(); j++) {
+                // get message
+                JSONObject m = jsonarray.getJSONObject(j);
+                String timestamp = m.getString("timestamp");
+                String content = m.getString("content");
+                String from_admin = m.getInt("from_admin") + "";
+
+                // decrypt message
+                String prvKey = mReport.getPrvKey();
+                content = ApplicationContext.getInstance().decryptForUser(content, prvKey);
+
+                // create Message object and add to db
+                ChatMessage message = new ChatMessage(from_admin, content, timestamp, mReportId);
+                ChatBook.getChatBook(getApplicationContext()).addMessage(message);
+            }
+
+            // update list to refresh UI
+            updateMessagesList();
+        } catch (Exception e) {
+            Log.d(TAG, "Exception: " + e.toString());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Gets followup messages from rddp server and stores in local db
+     */
     private void getMessages() {
         // get url
         String url = URL.GET_FOLLOW_UP_MESSAGES;
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(this);
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
-                try {
-                    // get json object
-                    JSONObject jsonObj = new JSONObject(response);
-                    
-                    // get json array of messages
-                    JSONArray jsonarray = jsonObj.getJSONArray("messages");
-
-                    ChatBook.getChatBook(getApplicationContext()).deleteMessages(mReportId);
-
-                    for (int j = 0; j < jsonarray.length(); j++) {
-                        JSONObject m = jsonarray.getJSONObject(j);
-                        String timestamp = m.getString("timestamp");
-                        String content = m.getString("content");
-                        String from_admin = m.getInt("from_admin") + "";
-
-                        // decrypt message
-                        String prvKey = mReport.getPrvKey();
-                        content = ApplicationContext.getInstance().decryptForUser(content, prvKey);
-
-                        ChatMessage message = new ChatMessage(from_admin, content, timestamp, mReportId);
-                        ChatBook.getChatBook(getApplicationContext()).addMessage(message);
-                    }
-                    updateMessagesList();
-                } catch (Exception e) {
-                    Log.d(TAG, "Exception: " + e.toString());
-                    e.printStackTrace();
-                }
+                processMessages(response);
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override
             public void onErrorResponse(VolleyError error) {
                 Log.d(TAG, "Volley Error: " + error.toString());
-                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
-                        Toast.LENGTH_LONG).show();
             }
         }) {
             protected Map<String, String> getParams() {
                 Map<String, String> MyData = new HashMap<>();
-
                 MyData.put("report_id", mReportId);
-
                 return MyData;
             }
         };
 
+        // set timeout and retry params
         stringRequest.setRetryPolicy(new DefaultRetryPolicy(
                 MY_SOCKET_TIMEOUT_MS,
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
@@ -421,15 +502,7 @@ public class FollowupChatActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
-    private void initTor() {
-        InitializeTor job = new InitializeTor();
-        job.execute();
-    }
 
-    private void sendMessageThroughTor(String message) {
-        MessageThroughTor job = new MessageThroughTor();
-        job.execute();
-    }
 
     private void sendMessage(final String message) {
         // get url
@@ -437,10 +510,12 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         // create request
         RequestQueue requestQueue = Volley.newRequestQueue(getApplicationContext());
-        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,new Response.Listener<String>() {
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
+                processMessages(response);
             }
         }, new Response.ErrorListener() { //listener to handle errors
             @Override
@@ -456,8 +531,10 @@ public class FollowupChatActivity extends AppCompatActivity {
                 String user_public_key_pem = mReport.getPubKey();
 
                 try {
-                    String message_user = ApplicationContext.getInstance().encryptForUser(message, user_public_key_pem);
-                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message, mAdminPublicKey);
+                    String message_user = ApplicationContext.getInstance().encryptForUser(
+                            message, user_public_key_pem);
+                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(
+                            message, mAdminPublicKey);
                     MyData.put("message_user", message_user);
                     MyData.put("message_admin", message_admin);
                 } catch (Exception e) {
@@ -474,32 +551,68 @@ public class FollowupChatActivity extends AppCompatActivity {
         requestQueue.add(stringRequest);
     }
 
-    private class MessageThroughTor extends AsyncTask<String, Void, String> {
+    private class InitializeTor extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String[] params) {
+            Log.d(TAG, "Initializing tor");
+
+            mOnionProxyManager = new AndroidOnionProxyManager(getApplicationContext(), "torr");
+
+            int totalSecondsPerTorStartup = 4 * 60;
+            int totalTriesPerTorStartup = 5;
+            try {
+                boolean ok = mOnionProxyManager.startWithRepeat(totalSecondsPerTorStartup,
+                        totalTriesPerTorStartup);
+                if (!ok)
+                    Log.e("TorTest", "Couldn't start Tor!");
+
+                while (!mOnionProxyManager.isRunning())
+                    Thread.sleep(90);
+
+                Log.v("TorTest", "Tor initialized on port " +
+                        mOnionProxyManager.getIPv4LocalHostSocksPort());
+
+
+                mHttpclient = getNewHttpClient();
+                int port = mOnionProxyManager.getIPv4LocalHostSocksPort();
+                InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", port);
+                mHttpContext = HttpClientContext.create();
+                mHttpContext.setAttribute("socks.address", socksaddr);
+
+                mTorReady = true;
+                Log.d(TAG, "Tor initialized");
+
+            }
+            catch (Exception e) {
+                Log.d(TAG, "Tor initialization exception");
+                e.printStackTrace();
+            }
+
+            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            //process message
+        }
+    }
+
+    private class GetMessagesThroughTor extends AsyncTask<String, Void, String> {
 
         @Override
         protected String doInBackground(String[] params) {
             try {
-                // wait if not tor initilized yet
-                while(!mTorInitialized) {
+                while(!mTorReady) {
                     Thread.sleep(90);
                 }
+                Log.d(TAG, "Tor is ready");
+
                 // get URL
-                HttpPost httpost = new HttpPost(URL.SEND_FOLLOW_UP_MESSAGE);
+                HttpPost httpost = new HttpPost(URL.GET_FOLLOW_UP_MESSAGES);
 
+                // encrypt data and add to hashmap
                 Map<String, String> MyData = new HashMap<>();
-
-                String message = params[0];
-                String user_public_key_pem = mReport.getPubKey();
-
-                try {
-                    String message_user = ApplicationContext.getInstance().encryptForUser(message, user_public_key_pem);
-                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(message, mAdminPublicKey);
-                    MyData.put("message_user", message_user);
-                    MyData.put("message_admin", message_admin);
-                } catch (Exception e) {
-                    Log.d(TAG, "Encryption error: " + e.getMessage());
-                }
-
                 MyData.put("report_id", mReportId);
 
                 // convert hashmap to json object
@@ -519,30 +632,97 @@ public class FollowupChatActivity extends AppCompatActivity {
                 HttpParams httpParameters = new BasicHttpParams();
                 HttpConnectionParams.setConnectionTimeout(httpParameters, MY_SOCKET_TIMEOUT_MS);
 
-                // handle reponse
+                // execute request
                 HttpResponse response;
                 response = mHttpclient.execute(httpost, mHttpContext);
-                // Examine the response status
-                Log.i("TorTest", response.getStatusLine().toString());
-                // Get hold of the response entity
+                Log.i(TAG, "Tor response status: " + response.getStatusLine().toString());
+
+                // get response entity
                 HttpEntity entity = response.getEntity();
-                // If the response does not enclose an entity, there is no need
-                // to worry about connection release
                 if (entity != null) {
-
-                    // A Simple JSON Response Read
                     InputStream instream = entity.getContent();
-                    String result= convertStreamToString(instream);
-
-                    // get report id assigned by authentication server
-                    JSONObject jsonObj = new JSONObject(result);
-                    String report_id = jsonObj.get("report_id").toString();
-
-
-                    Log.d("TorTest", "Result: " + result);
-                    // now you have the string representation of the HTML request
+                    String result = Utilities.convertStreamToString(instream);
+                    Log.d(TAG, "Tor response result: " + result);
+                    processMessages(result);
                     instream.close();
                 }
+                Log.d(TAG, "Done sending");
+            }
+            catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            return "";
+        }
+
+        @Override
+        protected void onPostExecute(String message) {
+            //
+        }
+    }
+
+    private class MessageThroughTor extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String[] params) {
+            try {
+                Log.d(TAG, "Sending through tor");
+                while(!mTorReady) {
+                    Thread.sleep(90);
+                }
+                Log.d(TAG, "Tor is ready");
+
+                // get URL
+                HttpPost httpost = new HttpPost(URL.SEND_FOLLOW_UP_MESSAGE);
+
+                // encrypt data and add to hashmap
+                Map<String, String> MyData = new HashMap<>();
+                String message = params[0];
+                String user_public_key_pem = mReport.getPubKey();
+                try {
+                    String message_user = ApplicationContext.getInstance().encryptForUser(
+                            message, user_public_key_pem);
+                    String message_admin = ApplicationContext.getInstance().encryptForAdmin(
+                            message, mAdminPublicKey);
+                    MyData.put("message_user", message_user);
+                    MyData.put("message_admin", message_admin);
+                } catch (Exception e) {
+                    Log.d(TAG, "Encryption error: " + e.getMessage());
+                }
+                MyData.put("report_id", mReportId);
+
+                // convert hashmap to json object
+                JSONObject holder = new JSONObject(MyData);
+
+                // pass results to a string builder
+                StringEntity se = new StringEntity(holder.toString());
+
+                // set the post request as the resulting string
+                httpost.setEntity(se);
+
+                // set request headers
+                httpost.setHeader("Accept", "application/json");
+                httpost.setHeader("Content-type", "application/json");
+
+                // set timeout
+                HttpParams httpParameters = new BasicHttpParams();
+                HttpConnectionParams.setConnectionTimeout(httpParameters, MY_SOCKET_TIMEOUT_MS);
+
+                // execute request
+                HttpResponse response;
+                response = mHttpclient.execute(httpost, mHttpContext);
+                Log.i(TAG, "Tor response status: " + response.getStatusLine().toString());
+
+                // get response entity
+                HttpEntity entity = response.getEntity();
+                if (entity != null) {
+                    InputStream instream = entity.getContent();
+                    String result= Utilities.convertStreamToString(instream);
+                    Log.d(TAG, "Tor response result: " + result);
+                    processMessages(result);
+                    instream.close();
+                }
+                Log.d(TAG, "Done sending");
             }
             catch (Exception e) {
                 e.printStackTrace();
@@ -550,80 +730,24 @@ public class FollowupChatActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
             }
 
-            return "some message";
+            return "";
         }
 
         @Override
         protected void onPostExecute(String message) {
-            //process message
+            updateMessagesList();
         }
     }
 
-    private class InitializeTor extends AsyncTask<String, Void, String> {
-
-        @Override
-        protected String doInBackground(String[] params) {
-
-            OnionProxyManager onionProxyManager = new AndroidOnionProxyManager(getApplicationContext(), "torr");
-
-            int totalSecondsPerTorStartup = 4 * 60;
-            int totalTriesPerTorStartup = 5;
-            try {
-                boolean ok = onionProxyManager.startWithRepeat(totalSecondsPerTorStartup, totalTriesPerTorStartup);
-                if (!ok)
-                    Log.e("TorTest", "Couldn't start Tor!");
-
-                while (!onionProxyManager.isRunning())
-                    Thread.sleep(90);
-
-                Log.v("TorTest", "Tor initialized on port " + onionProxyManager.getIPv4LocalHostSocksPort());
-
-
-                mHttpclient = getNewHttpClient();
-                int port = onionProxyManager.getIPv4LocalHostSocksPort();
-                InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", port);
-                mHttpContext = HttpClientContext.create();
-                mHttpContext.setAttribute("socks.address", socksaddr);
-
-                mTorInitialized = true;
-
-            }
-            catch (Exception e) {
-                e.printStackTrace();
-            }
-
-            return "some message";
-        }
-
-        @Override
-        protected void onPostExecute(String message) {
-            //process message
-        }
-    }
-
-    public HttpClient getNewHttpClient() {
-
-        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
-                .register("http", new MyConnectionSocketFactory())
-                .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
-                .build();
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
-        return HttpClients.custom()
-                .setConnectionManager(cm)
-                .build();
-    }
-
-    private void resendReport() {
-        PrepareReSendTask job = new PrepareReSendTask();
-        job.execute();
-    }
-
+    /**
+     * Background task for resending report if it failed
+     */
     public class PrepareReSendTask extends AsyncTask<String, Void, Boolean> {
 
         protected void onPreExecute() {
             mProgressDialog = new ProgressDialog(FollowupChatActivity.this);
             mProgressDialog.setIndeterminate(true);
-            mProgressDialog.setMessage("Your report is being resent. Check Followup tab for updates");
+            mProgressDialog.setMessage("Report is being resent. Check followup tab for updates");
             mProgressDialog.setCancelable(false);
             mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
             mProgressDialog.show();
@@ -674,31 +798,15 @@ public class FollowupChatActivity extends AppCompatActivity {
         }
     }
 
-    // source: http://stackoverflow.com/questions/4457492/how-do-i-use-the-simple-http-client-in-android
-    private static String convertStreamToString(InputStream is) {
-    /*
-     * To convert the InputStream to String we use the BufferedReader.readLine()
-     * method. We iterate until the BufferedReader return null which means
-     * there's no more data to read. Each line will appended to a StringBuilder
-     * and returned as String.
-     */
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-        StringBuilder sb = new StringBuilder();
-
-        String line = null;
-        try {
-            while ((line = reader.readLine()) != null) {
-                sb.append(line + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return sb.toString();
+    public HttpClient getNewHttpClient() {
+        Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
+                .register("http", new MyConnectionSocketFactory())
+                .register("https", new MySSLConnectionSocketFactory(
+                        SSLContexts.createSystemDefault()))
+                .build();
+        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
+        return HttpClients.custom()
+                .setConnectionManager(cm)
+                .build();
     }
 }

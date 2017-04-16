@@ -9,7 +9,6 @@ import android.graphics.BitmapFactory;
 import android.preference.PreferenceManager;
 import android.util.Base64;
 import android.util.Log;
-import android.widget.Toast;
 
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
@@ -30,7 +29,6 @@ import com.trinreport.m.app.utils.Utilities;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -57,31 +55,48 @@ import cz.msebera.android.httpclient.params.HttpConnectionParams;
 import cz.msebera.android.httpclient.params.HttpParams;
 import cz.msebera.android.httpclient.ssl.SSLContexts;
 
+
+/**
+ * Intent service for sending report to rddp in the background. It uses either a regular
+ * https connection or tor based on t
+ */
 public class SendReportService extends IntentService {
+
+
+    // constants
     private static String TAG = "SendReportService";
     private static int MY_SOCKET_TIMEOUT_MS = 15000; // 15 seconds
-
     private static final String EXTRA_REPORT_HASHMAP = "com.trinreport.m.app.extra.FORMDATA";
     private static final String EXTRA_REPORT_IMAGELIST = "com.trinreport.m.app.extra.IMAGEDATA";
     private static final String EXTRA_REPORT_ISANON = "com.trinreport.m.app.extra.ISANON";
 
+    // variables
     private boolean mIsAnon;
+    private String mAdminPublicKey;
+    private String mReportId;
     private HashMap<String, String> mReportData;
     private HashMap<String, String> mEncryptedData;
     private ArrayList<String> mImagesPathList;
-    private String mReportId;
 
+    // other references
     private SharedPreferences mSharedPreferences;
-    private String mAdminPublicKey;
-
     private ApplicationContext mApplicationContext;
 
-    // tor client
+    // tor client references
     private HttpClient mHttpclient;
     private HttpClientContext mHttpContext;
     private boolean mTorReady;
+    private OnionProxyManager mOnionProxyManager;
 
-    public static void startSendingReport(Context context, HashMap<String, String> data, ArrayList<String> imagesList, boolean isAnon) {
+    /**
+     * Wrapper method for creating startSendingReport service
+     * @param context application context
+     * @param data data from form
+     * @param imagesList list of image paths
+     * @param isAnon bollean of whether report is anonymous
+     */
+    public static void startSendingReport(Context context, HashMap<String,
+            String> data, ArrayList<String> imagesList, boolean isAnon) {
         Intent intent = new Intent(context, SendReportService.class);
         intent.putExtra(EXTRA_REPORT_HASHMAP, data);
         intent.putExtra(EXTRA_REPORT_ISANON, isAnon);
@@ -90,29 +105,40 @@ public class SendReportService extends IntentService {
         Log.d(TAG, "SendReportService service started");
     }
 
+    /**
+     * Constructor
+     */
     public SendReportService() {
         super("SendReportService");
     }
 
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
-            mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+            // get public key
+            mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(
+                    getApplicationContext());
             mAdminPublicKey = mSharedPreferences.getString("admin_public_key", "");
+
+            // initialize other references
             mApplicationContext = ApplicationContext.getInstance();
             mEncryptedData = new HashMap<>();
-
             mIsAnon = intent.getBooleanExtra(EXTRA_REPORT_ISANON, false);
-            mReportData = (HashMap<String, String>) intent.getSerializableExtra(EXTRA_REPORT_HASHMAP);
+            mReportData = (HashMap<String, String>) intent.getSerializableExtra(
+                    EXTRA_REPORT_HASHMAP);
             mImagesPathList = intent.getStringArrayListExtra(EXTRA_REPORT_IMAGELIST);
             mReportId = mReportData.get("report_id");
 
+            // log for debugging purposes
             Log.d(TAG, "report id: " + mReportId);
             Log.d(TAG, "report images: " + mImagesPathList.toString());
             Log.d(TAG, "report data: " + mReportData.toString());
 
             // encrypt data
-            encrypt();
+            boolean success = encrypt();
+            if(!success)
+                return;
 
             // send data to server
             if(!mIsAnon) {
@@ -125,12 +151,16 @@ public class SendReportService extends IntentService {
                 // send
                 if(mTorReady) {
                     sendReportTor();
+                    endTor();
                 }
             }
         }
     }
 
-    private void encrypt() {
+    /**
+     * Encrypts report data to be sent to rddp server
+     */
+    private boolean encrypt() {
         try {
             // add keys
             mEncryptedData.put("public_key", mReportData.get("public_key"));
@@ -164,6 +194,17 @@ public class SendReportService extends IntentService {
                         (mSharedPreferences.getString("useremail", "n/a"), mAdminPublicKey));
                 mEncryptedData.put("userdorm", mApplicationContext.encryptForAdmin(
                         mSharedPreferences.getString("userdorm", "n/a"), mAdminPublicKey));
+            } else {
+                mEncryptedData.put("username", mApplicationContext.encryptForAdmin(
+                        "n/a", mAdminPublicKey));
+                mEncryptedData.put("userphone", mApplicationContext.encryptForAdmin(
+                        "n/a", mAdminPublicKey));
+                mEncryptedData.put("userid", mApplicationContext.encryptForAdmin(
+                        "n/a", mAdminPublicKey));
+                mEncryptedData.put("useremail", mApplicationContext.encryptForAdmin(
+                        "n/a", mAdminPublicKey));
+                mEncryptedData.put("userdorm", mApplicationContext.encryptForAdmin(
+                        "n/a", mAdminPublicKey));
             }
 
             // encrypt and add images to map
@@ -195,9 +236,31 @@ public class SendReportService extends IntentService {
             Log.d(TAG, "Exception: " + e.getMessage());
             e.printStackTrace();
             recordFailure();
+            return false;
         }
+        return true;
     }
 
+    /**
+     * Updates report status in db as "Failed"
+     */
+    private void recordFailure() {
+        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
+                "Failed to send");
+    }
+
+    /**
+     * Updates report status in db as "Sent"
+     */
+    private void recordSucess() {
+        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
+                "Sent");
+    }
+
+    /**
+     * Sends data to rddp server using regular https socket
+     * @param data encrypted data
+     */
     private void sendReport(final HashMap <String, String> data) {
         // get url
         String url = URL.SEND_REPORT;
@@ -205,7 +268,8 @@ public class SendReportService extends IntentService {
         // create request
         RequestQueue MyRequestQueue = Volley.newRequestQueue(getApplicationContext());
 
-        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+        StringRequest MyStringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 Log.d(TAG, "Volley Sucess: " + response);
@@ -241,24 +305,29 @@ public class SendReportService extends IntentService {
         MyRequestQueue.add(MyStringRequest);
     }
 
+    /**
+     * Initializes a tor client
+     */
     private void initTor() {
-        OnionProxyManager onionProxyManager = new AndroidOnionProxyManager(getApplicationContext(), "torr");
+        mOnionProxyManager = new AndroidOnionProxyManager(
+                getApplicationContext(), "torr");
 
         int totalSecondsPerTorStartup = 4 * 60;
         int totalTriesPerTorStartup = 5;
         try {
-            boolean ok = onionProxyManager.startWithRepeat(totalSecondsPerTorStartup, totalTriesPerTorStartup);
+            boolean ok = mOnionProxyManager.startWithRepeat(
+                    totalSecondsPerTorStartup, totalTriesPerTorStartup);
             if (!ok)
                 Log.e(TAG, "Couldn't start Tor!");
 
-            while (!onionProxyManager.isRunning())
+            while (!mOnionProxyManager.isRunning())
                 Thread.sleep(90);
 
-            Log.v(TAG, "Tor initialized on port " + onionProxyManager.getIPv4LocalHostSocksPort());
+            Log.v(TAG, "Tor initialized on port " + mOnionProxyManager.getIPv4LocalHostSocksPort());
 
 
             mHttpclient = getNewHttpClient();
-            int port = onionProxyManager.getIPv4LocalHostSocksPort();
+            int port = mOnionProxyManager.getIPv4LocalHostSocksPort();
             InetSocketAddress socksaddr = new InetSocketAddress("127.0.0.1", port);
             mHttpContext = HttpClientContext.create();
             mHttpContext.setAttribute("socks.address", socksaddr);
@@ -272,6 +341,9 @@ public class SendReportService extends IntentService {
         }
     }
 
+    /**
+     * Sends data to rddp server using tor socket
+     */
     private void sendReportTor() {
         try {
             // get URL
@@ -319,18 +391,26 @@ public class SendReportService extends IntentService {
         }
     }
 
-    private void recordFailure() {
-        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId, "Failed to send");
+    /**
+     * Ends tor connection
+     */
+    private void endTor() {
+        try {
+            mOnionProxyManager.stop();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private void recordSucess() {
-        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId, "Sent");
-    }
-
+    /**
+     * Creates a new tor client
+     * @return http client
+     */
     public HttpClient getNewHttpClient() {
         Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()
                 .register("http", new MyConnectionSocketFactory())
-                .register("https", new MySSLConnectionSocketFactory(SSLContexts.createSystemDefault()))
+                .register("https", new MySSLConnectionSocketFactory(
+                        SSLContexts.createSystemDefault()))
                 .build();
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager(reg);
         return HttpClients.custom()

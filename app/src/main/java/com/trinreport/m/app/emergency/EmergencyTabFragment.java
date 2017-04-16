@@ -16,6 +16,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -41,6 +42,8 @@ public class EmergencyTabFragment extends Fragment {
 
     // constants
     private static final String TAG = "EmergencyTabFragment";
+    private static int VOLLEY_TIMEOUT_MS = 5000; // 5 seconds
+    private static int VOLLEY_RETRY = 10; // 5 times
 
     // layout references
     private Button mEmergencyButton;
@@ -210,6 +213,11 @@ public class EmergencyTabFragment extends Fragment {
                 return MyData;
             }
         };
+
+        stringRequest.setRetryPolicy(new DefaultRetryPolicy(
+                VOLLEY_TIMEOUT_MS,
+                VOLLEY_RETRY,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         // add to queue
         requestQueue.add(stringRequest);

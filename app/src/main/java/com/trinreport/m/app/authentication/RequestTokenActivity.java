@@ -143,11 +143,17 @@ public class RequestTokenActivity extends AppCompatActivity {
         startActivity(i);
     }
 
+    /**
+     * Shows loading marker next to the get token button
+     */
     private void showLoadingMarker() {
         mGetTokenButton.setEnabled(false);
         mLoadingMarker.setVisibility(View.VISIBLE);
     }
 
+    /**
+     * Hides loading marker next to the get token button
+     */
     private void hideLoadingMarker() {
         mGetTokenButton.setEnabled(true);
         mLoadingMarker.setVisibility(View.INVISIBLE);
