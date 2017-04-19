@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.DialogFragment;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
@@ -16,19 +15,26 @@ import com.trinreport.m.app.R;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 /**
- * Created by remember on 10/20/2015.
+ * Fragment for picking date of incident
  */
 public class DatePickerFragment extends DialogFragment {
 
+    // constants
     public static final String EXTRA_DATE = "com.trinreport.m.app.report.date";
     private static final String ARG_DATE = "date";
 
+    // references
     private DatePicker mDatePicker;
-
+    private Date mDate;
     private OnCompleteDateListener mListener;
 
+    /**
+     * Wrapper for instantiating date picker fragment
+     * @param date date currently displayed on screen
+     */
     public static DatePickerFragment newInstance(Date date) {
         Bundle args = new Bundle();
         args.putSerializable(ARG_DATE, date);
@@ -37,51 +43,65 @@ public class DatePickerFragment extends DialogFragment {
         fragment.setArguments(args);
         return fragment;
     }
+
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
-        Date date = (Date) getArguments().getSerializable(ARG_DATE);
+        // get date from intent
+        mDate = (Date) getArguments().getSerializable(ARG_DATE);
 
+        // get current values shown on screen
         Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        int year = calendar.get(Calendar.YEAR);
-        int month = calendar.get(Calendar.MONTH);
-        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        calendar.setTime(mDate);
+        final TimeZone tmz = calendar.getTimeZone();
+        final int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        final int minute = calendar.get(Calendar.MINUTE);
+        final int year = calendar.get(Calendar.YEAR);
+        final int month = calendar.get(Calendar.MONTH);
+        final int day = calendar.get(Calendar.DAY_OF_MONTH);
 
+        // update date picker with current date
         View v = LayoutInflater.from(getActivity())
                 .inflate(R.layout.dialog_date, null);
-
         mDatePicker = (DatePicker) v.findViewById(R.id.dialog_date_date_picker);
         mDatePicker.init(year, month, day, null);
 
+        // show dialog and add listener to button
         return new AlertDialog.Builder(getActivity())
                 .setView(v)
                 .setTitle(R.string.date_picker_title)
                 .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+
                         int year = mDatePicker.getYear();
                         int month = mDatePicker.getMonth();
                         int day = mDatePicker.getDayOfMonth();
-                        Date date = new GregorianCalendar(year, month, day).getTime();
-                        sendResult(Activity.RESULT_OK, date);
+
+                        GregorianCalendar newCalendar = new GregorianCalendar(
+                                year, month, day, hour, minute);
+                        newCalendar.setTimeZone(tmz);
+                        mDate = newCalendar.getTime();
+                        sendResult(Activity.RESULT_OK, mDate);
                     }
                 })
                 .create();
     }
 
+    /**
+     * Send result to parent activity
+     * @param resultCode result code
+     * @param date data
+     */
     private void sendResult(int resultCode, Date date) {
-        this.mListener.onCompleteDate(date);
-        /*if(getTargetFragment() == null) {
-            return;
+        if(resultCode == Activity.RESULT_OK) {
+            this.mListener.onCompleteDate(date);
         }
-        Intent intent = new Intent();
-        intent.putExtra(EXTRA_DATE, date);
-
-        getTargetFragment()
-                .onActivityResult(getTargetRequestCode(), resultCode, intent);*/
     }
 
-    // make sure the Activity implemented it
+    /**
+     * Fired when fragment attaches to activity
+     * @param activity parent activity
+     */
     @Override
     public void onAttach(Activity activity) {
         super.onAttach(activity);
@@ -89,11 +109,15 @@ public class DatePickerFragment extends DialogFragment {
             this.mListener = (OnCompleteDateListener)activity;
         }
         catch (final ClassCastException e) {
-            throw new ClassCastException(activity.toString() + " must implement OnCompleteListener");
+            throw new ClassCastException(
+                    activity.toString() + " must implement OnCompleteListener");
         }
     }
 
-    public static interface OnCompleteDateListener {
-        public abstract void onCompleteDate(Date date);
+    /**
+     * This interface is implemented by parent activity
+     */
+    public interface OnCompleteDateListener {
+        void onCompleteDate(Date date);
     }
 }

@@ -21,6 +21,13 @@ public class Report {
     private String is_anon;
     private String status;
 
+    private String urgency;
+    private String timestamp;
+    private String location;
+    private String description;
+    private String is_resp;
+    private String is_followup;
+
     public Report(String reportId, String prv_key, String title, String pub_key, long date, String is_anon, String status) {
         this.reportId = reportId;
         this.prv_key = prv_key;
@@ -29,6 +36,15 @@ public class Report {
         this.date_created = date;
         this.is_anon = is_anon;
         this.status = status;
+    }
+
+    public void add_data(String urgency, String timestamp, String location, String description, String is_resp, String is_followup) {
+        this.urgency = urgency;
+        this.timestamp = timestamp;
+        this.location = location;
+        this.description = description;
+        this.is_resp = is_resp;
+        this.is_followup = is_followup;
     }
 
     public String getReportId() {
@@ -61,6 +77,30 @@ public class Report {
 
     public boolean isAnon() {
         return is_anon.equals("1");
+    }
+
+    public String getUrgency() {
+        return urgency;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getIsResp() {
+        return is_resp;
+    }
+
+    public String getIsFollowup() {
+        return is_followup;
     }
 
     public String getNiceTimestamp() {

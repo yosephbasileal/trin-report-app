@@ -5,17 +5,12 @@ import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.MainActivity;
 import com.trinreport.m.app.R;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * This is the very initial page an authenticated user sees
@@ -35,44 +30,46 @@ public class StartPageActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // save context in singleton class
-        //ApplicationContext.getInstance().init(getApplicationContext());
 
         // inflate layout
         setContentView(R.layout.activity_start_page);
 
+        // get references
         mSharedPref = PreferenceManager.getDefaultSharedPreferences(this);
-
-        // add listener for get started button
         mGetStartedButton = (Button) findViewById(R.id.get_started_button);
+
+        // add event listener for get started button
         mGetStartedButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // check if user has already authenticated using their trinity email
                 boolean authenticated = mSharedPref.getBoolean("authenticated", false);
-                if (!authenticated) {
+                Log.d(TAG, "User authenticated: " + authenticated);
+                if (authenticated) {
                     // redirect to authentication start page
                     startMainActivity();
                 }
-
                 // start activity for requesting auth token
                 startRequestTokenActivity();
             }
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-    }
-
+    /**
+     * Wrapper for starting RequestTokenActivity
+     */
     private void startRequestTokenActivity() {
         Intent i = new Intent(this, RequestTokenActivity.class);
         startActivity(i);
     }
 
+    /**
+     * Wrapper for starting MainActivity
+     */
     private void startMainActivity() {
         Intent i = new Intent(this, MainActivity.class);
+        // clear application history stack
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(i);
     }
 }

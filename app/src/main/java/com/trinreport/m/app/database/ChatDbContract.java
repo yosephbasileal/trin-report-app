@@ -30,5 +30,13 @@ public class ChatDbContract {
         public static final String COLUMN_DATE_CREATED = "date_created";
         public static final String COLUMN_IS_ANON = "is_anonymous";
         public static final String COLUMN_STATUS = "status";
+
+        public static final String COLUMN_URGENCY = "urgency";
+        public static final String COLUMN_TIMESTAMP = "timestamp";
+        public static final String COLUMN_LOCATION = "location";
+        public static final String COLUMN_DESCRIPTION = "description";
+        public static final String COLUMN_IS_RESP = "is_resp_emp";
+        public static final String COLUMN_IS_FOLLOWUP = "follow_up_enabled";
+
     }
 }

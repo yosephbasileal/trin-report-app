@@ -71,10 +71,23 @@ public class ChatBook {
         mDatabase.insert(ChatDbContract.ReportEntry.TABLE_NAME, null, values);
     }
 
+    public void addReportForm(String reportId, String urgency, String timestamp, String location, String description, String is_resp, String is_followup) {
+        ContentValues values = new ContentValues();
+        values.put(ChatDbContract.ReportEntry.COLUMN_URGENCY, urgency);
+        values.put(ChatDbContract.ReportEntry.COLUMN_TIMESTAMP, timestamp);
+        values.put(ChatDbContract.ReportEntry.COLUMN_LOCATION, location);
+        values.put(ChatDbContract.ReportEntry.COLUMN_DESCRIPTION, description);
+        values.put(ChatDbContract.ReportEntry.COLUMN_IS_RESP, is_resp);
+        values.put(ChatDbContract.ReportEntry.COLUMN_IS_FOLLOWUP, is_followup);
+
+        mDatabase.update(ChatDbContract.ReportEntry.TABLE_NAME, values, ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " = ?",
+                new String[]{reportId});
+    }
+
     public void updateReportStatus(String reportId, String status) {
         ContentValues values = new ContentValues();
         values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, status);
-        mDatabase.update(ChatDbContract.ReportEntry.TABLE_NAME, values, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
+        mDatabase.update(ChatDbContract.ReportEntry.TABLE_NAME, values, ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " = ?",
                 new String[]{reportId});
     }
 

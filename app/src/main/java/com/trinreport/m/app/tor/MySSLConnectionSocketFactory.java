@@ -16,6 +16,10 @@ import cz.msebera.android.httpclient.conn.ssl.SSLConnectionSocketFactory;
 import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.util.Args;
 
+/**
+ * Tor SSL connection socket library
+ * Source: https://github.com/jehy/Tor-Onion-Proxy-Library
+ */
 public class MySSLConnectionSocketFactory extends SSLConnectionSocketFactory {
 
     public MySSLConnectionSocketFactory(final SSLContext sslContext) {
@@ -41,7 +45,8 @@ public class MySSLConnectionSocketFactory extends SSLConnectionSocketFactory {
         socket = new Socket();
         connectTimeout = 100000;
         socket.setSoTimeout(connectTimeout);
-        socket.connect(new InetSocketAddress(socksaddr.getHostName(), socksaddr.getPort()), connectTimeout);
+        socket.connect(new InetSocketAddress(socksaddr.getHostName(), socksaddr.getPort()),
+                connectTimeout);
         DataOutputStream outputStream = new DataOutputStream(socket.getOutputStream());
         outputStream.write((byte) 0x04);
         outputStream.write((byte) 0x01);
@@ -60,7 +65,8 @@ public class MySSLConnectionSocketFactory extends SSLConnectionSocketFactory {
         inputStream.readInt();
 
         SSLConnectionSocketFactory sslSocketFactory = SSLConnectionSocketFactory.getSocketFactory();
-        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createLayeredSocket(socket, host.getHostName(), host.getPort(), context);
+        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createLayeredSocket(
+                socket, host.getHostName(), host.getPort(), context);
         prepareSocket(sslSocket);
         return sslSocket;
     }

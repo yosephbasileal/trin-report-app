@@ -14,7 +14,8 @@ import java.util.regex.PatternSyntaxException;
  * Created by bimana2 on 11/5/16.
  */
 public class Utilities {
-    public static boolean validate_email(String email, String domain) {
+    public static boolean validateEmail(String email) {
+        String domain = "trincoll.edu";
         String[] t;
         String delimiter = "@";
 
@@ -27,6 +28,17 @@ public class Utilities {
             return false;
         } catch (ArrayIndexOutOfBoundsException e) {
             // return false
+            return false;
+        }
+    }
+
+    public static boolean validateCode(String code) {
+        int min = 0;
+        int max = 999998;
+        try {
+            int codeInt = Integer.parseInt(code);
+            return (codeInt > min) && (codeInt < max);
+        } catch (Exception e) {
             return false;
         }
     }
@@ -64,6 +76,19 @@ public class Utilities {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        return sb.toString();
+    }
+
+    public static String bytesToHexString(byte[] bytes) {
+        // http://stackoverflow.com/questions/332079
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i < bytes.length; i++) {
+            String hex = Integer.toHexString(0xFF & bytes[i]);
+            if (hex.length() == 1) {
+                sb.append('0');
+            }
+            sb.append(hex);
         }
         return sb.toString();
     }

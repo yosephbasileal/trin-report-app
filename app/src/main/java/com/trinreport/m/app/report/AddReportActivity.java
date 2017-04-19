@@ -5,15 +5,12 @@ import android.app.FragmentManager;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Environment;
 import android.os.Handler;
-import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.support.v4.content.CursorLoader;
 import android.support.v7.app.AppCompatActivity;
@@ -32,15 +29,17 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioGroup;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.trinreport.m.app.ChatBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.model.Report;
+import com.trinreport.m.app.utils.Utilities;
 
-import java.io.File;
-import java.io.IOException;
 import java.security.KeyPair;
 import java.security.MessageDigest;
 import java.text.DateFormat;
@@ -50,21 +49,18 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
-import cz.msebera.android.httpclient.client.HttpClient;
-import cz.msebera.android.httpclient.client.protocol.HttpClientContext;
 
-
-public class AddReportActivity extends AppCompatActivity implements  DatePickerFragment.OnCompleteDateListener, TimePickerFragment.OnCompleteTimeListener{
+public class AddReportActivity extends AppCompatActivity implements
+        DatePickerFragment.OnCompleteDateListener, TimePickerFragment.OnCompleteTimeListener{
 
     // constants
     private static final String TAG = "AddReportFragment";
     private static final String DIALOG_DATE = "DialogDate";
     private static final String DIALOG_TIME = "DialogTime";
-
     private static final int REQUEST_DATE = 0;
     private static final int REQUEST_TIME = 1;
-    private static final int REQUEST_IMAGE_CAPTURE = 2;
     private static final int REQUEST_IMAGE_UPLOAD = 3;
+    private static final int MAX_NUM_IMAGES = 3;
 
     // layout references
     private Toolbar mToolbar;
@@ -79,9 +75,13 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private CheckBox mResEmployeeCheckbox;
     private Button mSubmitbutton;
     private RecyclerView mPhotoRecyclerView;
+    private ProgressDialog mProgressDialog;
+    private ProgressBar mLoadingMarker;
+    private TextView mErrorText;
+
+    // other references
     private RecyclerView.Adapter mAdapter;
     private LinearLayoutManager mLayoutManager;
-    private ProgressDialog mProgressDialog;
 
     // form inputs
     private String mUrgency;
@@ -93,19 +93,16 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
     private boolean mFollowupEnabled;
     private boolean mResEmployeeChecked;
 
-    // other references
+    // other variables
     private ArrayList<String> mImagePathList;
-    private String mCurrentPhotoPath;
-    private SharedPreferences mSharedPreferences;
-    private String mAdminPublicKey;
-
-    // tor client
-    private HttpClient mHttpclient;
-    private boolean mTorInitialized;
-    private HttpClientContext mHttpContext;
+    private String mReportId;
 
 
+    /**
+     * Constructor
+     */
     public AddReportActivity() {
+        mReportId = "";
         mUrgency = "medium";
         mDate = new Date();
         mLocation = "n/a";
@@ -114,14 +111,15 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mIsAnonymous = false;
         mFollowupEnabled = true;
         mResEmployeeChecked = false;
-        mTorInitialized = false;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // inflate layout
         setContentView(R.layout.activity_add_report);
 
+        // get references
         mToolbar = (Toolbar) findViewById(R.id.toolbar_report);
         mRadioGroup = (RadioGroup) findViewById(R.id.radio_urgency);
         mDateButton = (Button) findViewById(R.id.report_date);
@@ -133,10 +131,9 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         mFollowupCheckbox = (CheckBox) findViewById(R.id.checkbox_followup);
         mResEmployeeCheckbox = (CheckBox) findViewById(R.id.checkbox_responsible);
         mSubmitbutton = (Button) findViewById(R.id.button_submit);
-
-        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        mAdminPublicKey = mSharedPreferences.getString("admin_public_key", "");
+        mPhotoRecyclerView = (RecyclerView) findViewById(R.id.images_recycler_view);
+        mLoadingMarker = (ProgressBar) findViewById(R.id.marker_submit_report);
+        mErrorText = (TextView) findViewById(R.id.error_report);
 
         // setup toolbar
         if (mToolbar != null) {
@@ -145,7 +142,6 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
         }
-
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -154,22 +150,22 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // update time
+        // update time to current time
         updateDate();
 
-        // setup list, adapter and recyclerview for selected images
+        // setup list for selected images
         mImagePathList = new ArrayList<>();
-        String imageUri = "drawable://" + R.drawable.add2;
+        String imageUri = "drawable://" + R.drawable.add2; // first image is an add button
         mImagePathList.add(imageUri);
-        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
-        mPhotoRecyclerView = (RecyclerView) findViewById(R.id.images_recycler_view);
 
+        // setup recycler view and adapter
+        mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false);
         mPhotoRecyclerView.setLayoutManager(mLayoutManager);
         mAdapter = new PhotoAdapter();
         mPhotoRecyclerView.setAdapter(mAdapter);
         mAdapter.notifyDataSetChanged();
 
-        // urgency radio button
+        // urgency radio button change listener
         mRadioGroup.setOnCheckedChangeListener(new RadioGroup.OnCheckedChangeListener()
         {
             @Override
@@ -189,7 +185,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // date picker
+        // date picker listener
         mDateButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -200,7 +196,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // time picker
+        // time picker listener
         mTimeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -211,7 +207,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // location text
+        // location text listener
         mLocationText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -229,7 +225,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // description text
+        // description text listener
         mDescriptionText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -247,7 +243,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        // type of incident text
+        // type of incident text listener
         mTypeText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -265,7 +261,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-        //
+        // anonymous checkbox listener
         mAnonymousCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -273,6 +269,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
+        // followup checkbox listener
         mFollowupCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -280,6 +277,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
+        // responsible employee listener
         mResEmployeeCheckbox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -287,15 +285,21 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             }
         });
 
-
+        // submit button listener
         mSubmitbutton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-            sendReport();
+                sendReport();
             }
         });
     }
 
+    /**
+     * Fires when activities started for result send data
+     * @param requestCode
+     * @param resultCode
+     * @param data
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode != RESULT_OK) {
@@ -313,7 +317,10 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
             mDate = date;
             updateDate();
         }
-        if (requestCode == REQUEST_IMAGE_UPLOAD && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (requestCode == REQUEST_IMAGE_UPLOAD
+                && resultCode == RESULT_OK
+                && data != null
+                && data.getData() != null) {
 
             Uri uri = data.getData();
             String path = getRealPathFromURI_API11to18(this, uri);
@@ -322,23 +329,101 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         }
     }
 
-    // call back from time picker fragment
+    /**
+     * Shows loading marker next to the submit button
+     */
+    private void showLoadingMarker() {
+        mSubmitbutton.setEnabled(false);
+        mLoadingMarker.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Hides loading marker next to the submit button
+     */
+    private void hideLoadingMarker() {
+        mSubmitbutton.setEnabled(true);
+        mLoadingMarker.setVisibility(View.INVISIBLE);
+    }
+
+    /**
+     * Shows error under edit text view
+     * @param error error message to show
+     */
+    private void showError(String error) {
+        mErrorText.setText(error);
+    }
+
+    /**
+     * Call back from time picker fragment
+     * @param date picked date
+     */
     public void onCompleteTime(Date date) {
         mDate = date;
         updateDate();
     }
 
-    // call back from date picker fragment
+    /**
+     * Call back from date picker fragment
+     * @param date picked date
+     */
     public void onCompleteDate(Date date) {
         mDate = date;
         updateDate();
     }
 
+    /**
+     * Updates date string on screen
+     */
     private void updateDate() {
         mDateButton.setText(DateFormat.getDateInstance().format(mDate));
         mTimeButton.setText(DateFormat.getTimeInstance().format(mDate));
     }
 
+    /**
+     * Starts an asynchronous task to send report
+     */
+    private void sendReport() {
+        PrepareSendTask job = new PrepareSendTask();
+        job.execute();
+    }
+
+    /**
+     * Opens image upload dialog
+     */
+    private void dispathUploadPictureIntent() {
+        Intent uploadPictureIntent = new Intent(Intent.ACTION_GET_CONTENT);
+        uploadPictureIntent.setType("image/*");
+        startActivityForResult(Intent.createChooser(uploadPictureIntent, "Select Picture"),
+                REQUEST_IMAGE_UPLOAD);
+    }
+
+    /**
+     * Generates a thread ID using sha256
+     * @return thread_id string
+     */
+    private String generateThreadID() {
+        String thread_id = "";
+        try {
+            // generate thread id
+            String input = (new Date()).toString(); // using timestamp
+            MessageDigest digest;
+            digest = MessageDigest.getInstance("SHA-256");
+            digest.update(input.getBytes());
+            thread_id = Utilities.bytesToHexString(digest.digest());
+            Log.i(TAG, "Hash is " + thread_id);
+        } catch (Exception e) {
+            Log.d(TAG, "Exception: " + e.toString());
+            e.printStackTrace();
+        }
+        return thread_id;
+    }
+
+    /**
+     * Converts image content URI to absolute path
+     * @param context application context
+     * @param contentUri uri of image
+     * @return
+     */
     @SuppressLint("NewApi")
     public static String getRealPathFromURI_API11to18(Context context, Uri contentUri) {
         String[] proj = { MediaStore.Images.Media.DATA };
@@ -358,57 +443,41 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         return result;
     }
 
-    private File createImageFile() throws IOException {
-        // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPEG_" + timeStamp + "_";
-        File storageDir = this.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        File image = File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",         /* suffix */
-                storageDir      /* directory */
-        );
-
-        // Save a file: path for use with ACTION_VIEW intents
-        mCurrentPhotoPath = image.getAbsolutePath();
-        return image;
-    }
-
+    /**
+     * Binds an image to image view
+     * @param photoPath absolute path of image
+     * @param imageView image view to use for display
+     */
     private void setPic(String photoPath, ImageView imageView) {
-        // Get the dimensions of the View
-        int targetW = imageView.getWidth();
-        int targetH = imageView.getHeight();
+        // set the dimensions of the view
+        // Remark: hardcoded values should be changed in future iterations
+        int targetW = 120;
+        int targetH = 160;
 
-        // TODO: remove this
-        targetW = 120;
-        targetH = 160;
-
-        // Get the dimensions of the bitmap
+        // get dimensions of bitmap
         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
         bmOptions.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(photoPath, bmOptions);
         int photoW = bmOptions.outWidth;
         int photoH = bmOptions.outHeight;
 
-        // Determine how much to scale down the image
+        // determine how much to scale down the image
         int scaleFactor = Math.min(photoW/targetW, photoH/targetH);
 
-        // Decode the image file into a Bitmap sized to fill the View
+        // decode the image file into a bitmap sized to fill the view
         bmOptions.inJustDecodeBounds = false;
         bmOptions.inSampleSize = scaleFactor;
         bmOptions.inPurgeable = true;
 
+        // set bitmap to image view
         Bitmap bitmap = BitmapFactory.decodeFile(photoPath, bmOptions);
         imageView.setImageBitmap(bitmap);
     }
 
-    private void dispathUploadPictureIntent() {
-        Intent uploadPictureIntent = new Intent(Intent.ACTION_GET_CONTENT);
-        uploadPictureIntent.setType("image/*");
-        startActivityForResult(Intent.createChooser(uploadPictureIntent, "Select Picture"), REQUEST_IMAGE_UPLOAD);
-    }
 
-
+    /**
+     * View holder for recycler view
+     */
     private class PhotoHolder extends RecyclerView.ViewHolder {
 
         private ImageView mItemImageView;
@@ -420,33 +489,43 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
 
         public void bindDrawable(final int Position) {
+            // the first image is the add button, so has a separate logic
             if(Position == 0) {
-                mItemImageView.setImageDrawable(getApplicationContext().getResources().getDrawable(R.drawable.add2));
+                mItemImageView.setImageDrawable(getApplicationContext()
+                        .getResources().getDrawable(R.drawable.add2));
                 mItemImageView.setPadding(1,1,1,1);
-                mItemImageView.setBackgroundColor(getApplicationContext().getResources().getColor(R.color.colorPrimary));
-                // onclick listener that opens ViewPager acticity when clicked on an image
+                mItemImageView.setBackgroundColor(getApplicationContext()
+                        .getResources().getColor(R.color.colorPrimary));
+
+                // add click lisenter to open dialog up upload picture
                 mItemImageView.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
+                        if(mImagePathList.size() -1 >= MAX_NUM_IMAGES) {
+                            Toast.makeText(getApplicationContext(),
+                                    "A maximum of " + MAX_NUM_IMAGES + " images allowed",
+                                    Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         dispathUploadPictureIntent();
                     }
                 });
                 return;
             }
-            // get path to image file
+            // for all other positions, get path to image file
             String path = mImagePathList.get(Position);
 
             // display image
-            if (path == null) {
-                //mItemImageView.setImageDrawable(null);
-            } else {
+            if (path != null) {
                 setPic(path, mItemImageView);
             }
-
         }
     }
 
 
+    /**
+     * Adapter for recycler view
+     */
     private class PhotoAdapter extends RecyclerView.Adapter<PhotoHolder> {
 
         public PhotoAdapter() {
@@ -470,31 +549,28 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
         }
     }
 
-    private void sendReport() {
-        PrepareSendTask job = new PrepareSendTask();
-        job.execute();
-    }
 
+    /**
+     * Background task for preparing to send report to rddp service
+     */
     public class PrepareSendTask extends AsyncTask<String, Void, Boolean> {
 
         protected void onPreExecute() {
-            mProgressDialog = new ProgressDialog(AddReportActivity.this);
-            mProgressDialog.setIndeterminate(true);
-            mProgressDialog.setCancelable(false);
-            mProgressDialog.setMessage("Please wait...");
-            mProgressDialog.show();
+            showLoadingMarker();
         }
 
         @Override
         protected void onPostExecute(final Boolean success) {
+            hideLoadingMarker();
             if(success) {
-                mProgressDialog.dismiss();
-                mProgressDialog = null;
+                /*mProgressDialog.dismiss();
+                mProgressDialog = null;*/
                 mProgressDialog = new ProgressDialog(AddReportActivity.this);
                 mProgressDialog.setIndeterminate(true);
-                mProgressDialog.setMessage("Your report is being sent. Check Followup tab for updates");
+                mProgressDialog.setMessage("Report is being sent. Check followup tab for updates");
                 mProgressDialog.setCancelable(false);
-                mProgressDialog.setIndeterminateDrawable(getResources().getDrawable(R.drawable.ic_check_black_24dp));
+                mProgressDialog.setIndeterminateDrawable(getResources().
+                        getDrawable(R.drawable.ic_check_black_24dp));
                 mProgressDialog.show();
                 new Handler().postDelayed(new Runnable() {
 
@@ -503,7 +579,12 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                         mProgressDialog.dismiss();
                         AddReportActivity.this.finish();
                     }
-                }, 5000);
+                }, 3000);
+            } else {
+                // show error
+                showError("Something when wrong! Try again.");
+                // delete report from db if created
+                ChatBook.getChatBook(getApplicationContext()).deleteReport(mReportId);
             }
         }
 
@@ -517,13 +598,13 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 String publicKeyPem = RSA.createStringFromPublicKey(keyPair.getPublic());
 
                 // generate cookie
-                String reportId = generateCookie();
+                mReportId = generateThreadID();
 
                 // save in local db
                 String is_anon = (mIsAnonymous)? "1": "0";
                 String status = "Sending";
                 ChatBook.getChatBook(getApplicationContext()).addReport(
-                        new Report(reportId,
+                        new Report(mReportId,
                                 privateKeyPem,
                                 mType,
                                 publicKeyPem,
@@ -532,7 +613,7 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
 
                 // add keys to hashmap
                 data.put("public_key", publicKeyPem);
-                data.put("report_id", reportId);
+                data.put("report_id", mReportId);
 
                 // format date
                 Format formatter = new SimpleDateFormat("E, dd MMM yyyy HH:mm:ss z");
@@ -548,45 +629,26 @@ public class AddReportActivity extends AppCompatActivity implements  DatePickerF
                 data.put("is_resp_emp", mResEmployeeChecked + "");
                 data.put("follow_up_enabled", mFollowupEnabled + "");
 
-                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList, mIsAnonymous);
+                // save report form to db
+                ChatBook.getChatBook(getApplicationContext()).addReportForm(
+                        mReportId,
+                        mUrgency,
+                        timestamp,
+                        mLocation,
+                        mDescription,
+                        mResEmployeeChecked + "",
+                        mFollowupEnabled + ""
+                );
+
+                // start service to send report
+                SendReportService.startSendingReport(getApplicationContext(), data, mImagePathList,
+                        mIsAnonymous);
 
             } catch (Exception e) {
+                e.printStackTrace();
                 return false;
             }
             return true;
         }
-    }
-
-    private String generateCookie() {
-        try {
-            // generate thread cookie
-            String input = (new Date()).toString(); // using timestamp for now
-            MessageDigest digest;
-            String cookie;
-            digest = MessageDigest.getInstance("SHA-256");
-            digest.update(input.getBytes());
-            cookie = bytesToHexString(digest.digest());
-            Log.i(TAG, "Hash is " + cookie);
-            return cookie;
-
-        } catch (Exception e) {
-            Log.d(TAG, "Exception: " + e.toString());
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-
-    private static String bytesToHexString(byte[] bytes) {
-        // http://stackoverflow.com/questions/332079
-        StringBuffer sb = new StringBuffer();
-        for (int i = 0; i < bytes.length; i++) {
-            String hex = Integer.toHexString(0xFF & bytes[i]);
-            if (hex.length() == 1) {
-                sb.append('0');
-            }
-            sb.append(hex);
-        }
-        return sb.toString();
     }
 }
