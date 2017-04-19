@@ -376,6 +376,13 @@ public class FollowupChatActivity extends AppCompatActivity {
         // get message string
         String content = mChatText.getText().toString();
 
+        // check if message is empty
+        if (content.isEmpty()) {
+            Toast.makeText(getApplicationContext(), "Message is empty!",
+                    Toast.LENGTH_LONG).show();
+            return false;
+        }
+
         // add to list
         String fromAdmin = "0";
         String timestamp = new Date().toString();
@@ -587,6 +594,8 @@ public class FollowupChatActivity extends AppCompatActivity {
             catch (Exception e) {
                 Log.d(TAG, "Tor initialization exception");
                 e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
 
             return "";
@@ -650,6 +659,8 @@ public class FollowupChatActivity extends AppCompatActivity {
             }
             catch (Exception e) {
                 e.printStackTrace();
+                Toast.makeText(getApplicationContext(), "Connection failed! Try again.",
+                        Toast.LENGTH_LONG).show();
             }
 
             return "";

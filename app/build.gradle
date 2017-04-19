@@ -39,6 +39,8 @@ dependencies {
     compile 'org.slf4j:slf4j-android:1.7.7'
     compile 'cz.msebera.android:httpclient:4.4.1.2'
     compile 'com.android.support:recyclerview-v7:23.2.1'
+    compile 'com.google.maps.android:android-maps-utils:0.5'
+    compile 'com.google.android.gms:play-services-maps:10.0.1'
 }
 
 /*configurations.compile {

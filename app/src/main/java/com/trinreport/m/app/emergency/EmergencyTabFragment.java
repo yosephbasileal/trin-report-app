@@ -23,6 +23,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.maps.android.PolyUtil;
 import com.trinreport.m.app.ApplicationContext;
 import com.trinreport.m.app.GPSTracker;
 import com.trinreport.m.app.R;
@@ -31,8 +32,12 @@ import com.trinreport.m.app.URL;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+
+import com.google.android.gms.maps.model.LatLng;
 
 
 /**
@@ -96,6 +101,13 @@ public class EmergencyTabFragment extends Fragment {
                     //get current location
                     mLocation = mGpsTracker.getLocation();
 
+                    // validate location
+                    if(!validate_location()) {
+                        Toast.makeText(getActivity(), "Call 911. Your are too far from campus.",
+                        Toast.LENGTH_LONG).show();
+                        return false;
+                    }
+
                     //send request to RDDP
                     notifyEmergency();
 
@@ -103,7 +115,7 @@ public class EmergencyTabFragment extends Fragment {
                     throw e;
                 }
 
-                return false;
+                return true;
             }
         });
 
@@ -125,6 +137,29 @@ public class EmergencyTabFragment extends Fragment {
         Intent i = new Intent(getActivity(), Emergency.class);
         i.putExtra(Emergency.EXTRA_REPORT_ID, report_id);
         startActivity(i);
+    }
+
+    /**
+     * Validate GPS coordinates
+     */
+    private boolean validate_location() {
+        List<LatLng> poly = new ArrayList<>();
+        poly.add(new LatLng(41.756097, -72.697784)); // middle of Pope Park
+        poly.add(new LatLng(41.739487, -72.697258)); // New Britain and Hillside ave
+        poly.add(new LatLng(41.743114, -72.682715)); // Maple ave and Webster st
+        poly.add(new LatLng(41.756292, -72.682463)); // Washington st and Ward st
+        boolean inside = PolyUtil.containsLocation(
+                new LatLng(41.757595, -72.699073), poly, true
+        );
+        return inside;
+    }
+
+    /**
+     * Encryption helper method
+     */
+    private String enc(String plain) throws Exception{
+        return ApplicationContext.getInstance().encryptForAdmin(plain,
+                mAdminPublicKey);
     }
 
     /**
@@ -177,22 +212,14 @@ public class EmergencyTabFragment extends Fragment {
 
                 // encrypt data
                 try {
-                    name = ApplicationContext.getInstance().encryptForAdmin(name,
-                            mAdminPublicKey);
-                    phone = ApplicationContext.getInstance().encryptForAdmin(phone,
-                            mAdminPublicKey);
-                    userid = ApplicationContext.getInstance().encryptForAdmin(userid,
-                            mAdminPublicKey);
-                    email = ApplicationContext.getInstance().encryptForAdmin(email,
-                            mAdminPublicKey);
-                    dorm = ApplicationContext.getInstance().encryptForAdmin(dorm,
-                            mAdminPublicKey);
-                    longitude = ApplicationContext.getInstance().encryptForAdmin(longitude,
-                            mAdminPublicKey);
-                    latitude = ApplicationContext.getInstance().encryptForAdmin(latitude,
-                            mAdminPublicKey);
-                    explanation = ApplicationContext.getInstance().encryptForAdmin(explanation,
-                            mAdminPublicKey);
+                    name = enc(name);
+                    phone = enc(phone);
+                    userid = enc(userid);
+                    email = enc(email);
+                    dorm = enc(dorm);
+                    longitude = enc(longitude);
+                    latitude = enc(latitude);
+                    explanation = enc(explanation);
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
                     e.printStackTrace();

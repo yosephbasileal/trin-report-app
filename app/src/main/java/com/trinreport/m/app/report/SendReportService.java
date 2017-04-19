@@ -167,14 +167,10 @@ public class SendReportService extends IntentService {
             mEncryptedData.put("report_id", mReportData.get("report_id"));
 
             // encrypt form inputs
-            mEncryptedData.put("type", mApplicationContext.encryptForAdmin(
-                    mReportData.get("type"), mAdminPublicKey));
-            mEncryptedData.put("urgency", mApplicationContext.encryptForAdmin(
-                    mReportData.get("urgency"), mAdminPublicKey));
-            mEncryptedData.put("location", mApplicationContext.encryptForAdmin(
-                    mReportData.get("location"), mAdminPublicKey));
-            mEncryptedData.put("description", mApplicationContext.encryptForAdmin(
-                    mReportData.get("description"), mAdminPublicKey));
+            mEncryptedData.put("type", enc2(mReportData.get("type")));
+            mEncryptedData.put("urgency", enc2(mReportData.get("urgency")));
+            mEncryptedData.put("location", enc2(mReportData.get("location")));
+            mEncryptedData.put("description", enc2(mReportData.get("description")));
 
             // add other data
             mEncryptedData.put("timestamp", mReportData.get("timestamp"));
@@ -184,27 +180,17 @@ public class SendReportService extends IntentService {
 
             // add reporter data if not anonymous
             if(!mIsAnon) {
-                mEncryptedData.put("username", mApplicationContext.encryptForAdmin(
-                        mSharedPreferences.getString("username", "n/a"), mAdminPublicKey));
-                mEncryptedData.put("userphone", mApplicationContext.encryptForAdmin(
-                        mSharedPreferences.getString("userphone", "n/a"), mAdminPublicKey));
-                mEncryptedData.put("userid", mApplicationContext.encryptForAdmin(
-                        mSharedPreferences.getString("userid", "n/a"), mAdminPublicKey));
-                mEncryptedData.put("useremail", mApplicationContext.encryptForAdmin
-                        (mSharedPreferences.getString("useremail", "n/a"), mAdminPublicKey));
-                mEncryptedData.put("userdorm", mApplicationContext.encryptForAdmin(
-                        mSharedPreferences.getString("userdorm", "n/a"), mAdminPublicKey));
+                mEncryptedData.put("username", enc("username"));
+                mEncryptedData.put("userphone", enc("userphone"));
+                mEncryptedData.put("userid", enc("userid"));
+                mEncryptedData.put("useremail", enc("useremail"));
+                mEncryptedData.put("userdorm", enc("userdorm"));
             } else {
-                mEncryptedData.put("username", mApplicationContext.encryptForAdmin(
-                        "n/a", mAdminPublicKey));
-                mEncryptedData.put("userphone", mApplicationContext.encryptForAdmin(
-                        "n/a", mAdminPublicKey));
-                mEncryptedData.put("userid", mApplicationContext.encryptForAdmin(
-                        "n/a", mAdminPublicKey));
-                mEncryptedData.put("useremail", mApplicationContext.encryptForAdmin(
-                        "n/a", mAdminPublicKey));
-                mEncryptedData.put("userdorm", mApplicationContext.encryptForAdmin(
-                        "n/a", mAdminPublicKey));
+                mEncryptedData.put("username", enc2("n/a"));
+                mEncryptedData.put("userphone", enc2("n/a"));
+                mEncryptedData.put("userid", enc2("n/a"));
+                mEncryptedData.put("useremail", enc2("n/a"));
+                mEncryptedData.put("userdorm", enc2("n/a"));
             }
 
             // encrypt and add images to map
@@ -229,7 +215,7 @@ public class SendReportService extends IntentService {
 
                 String key_str = Base64.encodeToString(keyBytes, Base64.DEFAULT);
                 String iv_str = Base64.encodeToString(ivBytes, Base64.DEFAULT);
-                mEncryptedData.put("images_key", key_str);
+                mEncryptedData.put("images_key", enc2(key_str));
                 mEncryptedData.put("images_iv", iv_str);
             }
         } catch (Exception e) {
@@ -239,6 +225,21 @@ public class SendReportService extends IntentService {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Encryption helper method
+     */
+    private String enc(String key) throws Exception {
+        return mApplicationContext.encryptForAdmin(
+                mSharedPreferences.getString(key, "n/a"), mAdminPublicKey);
+    }
+
+    /**
+     * Encryption helper method 2
+     */
+    private String enc2(String plain) throws Exception {
+        return mApplicationContext.encryptForAdmin(plain, mAdminPublicKey);
     }
 
     /**
