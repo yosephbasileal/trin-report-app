@@ -149,7 +149,7 @@ public class EmergencyTabFragment extends Fragment {
         poly.add(new LatLng(41.743114, -72.682715)); // Maple ave and Webster st
         poly.add(new LatLng(41.756292, -72.682463)); // Washington st and Ward st
         boolean inside = PolyUtil.containsLocation(
-                new LatLng(41.757595, -72.699073), poly, true
+                new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), poly, true
         );
         return inside;
     }

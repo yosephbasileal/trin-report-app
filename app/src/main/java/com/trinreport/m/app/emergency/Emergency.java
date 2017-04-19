@@ -78,6 +78,7 @@ public class Emergency extends AppCompatActivity {
     private String mAdminPublicKey;
 
     public Emergency() {
+        mExplanation = "";
         mReceieved = false;
         mCanCallMe = true;
     }
@@ -149,6 +150,11 @@ public class Emergency extends AppCompatActivity {
         mExplanationButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if(mExplanation.isEmpty()) {
+                    Toast.makeText(getApplicationContext(), "Explanation cannot be empty.",
+                            Toast.LENGTH_LONG).show();
+                    return;
+                }
                 // send to rddp server
                 sendExplanation();
 
