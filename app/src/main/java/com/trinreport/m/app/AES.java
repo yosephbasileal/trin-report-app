@@ -14,7 +14,7 @@ import javax.crypto.spec.PBEKeySpec;
 
 public class AES {
 
-    private static String KEY_GENERATION_PASSWORD = "password"; // TODO: change this
+    private static String KEY_GENERATION_PASSWORD = "B2XqMWtvhRjKv2a2EpwiRLObnvIV3PmKKFGjB0bG";
 
     // generates aes key based on a password
     public static byte[] generateKey() {

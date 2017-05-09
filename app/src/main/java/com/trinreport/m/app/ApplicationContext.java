@@ -29,10 +29,14 @@ import cz.msebera.android.httpclient.ssl.SSLContexts;
 public class ApplicationContext {
 
     private Context appContext;
+    private static ApplicationContext mInstance;
 
     private ApplicationContext(){
     }
 
+    /**
+     * Initializes application context
+     */
     public void init(Context context){
         // initialize context
         if(appContext == null){
@@ -41,30 +45,46 @@ public class ApplicationContext {
         }
     }
 
+    /**
+     * Returns a reference to application context
+     */
     private Context getContext(){
         return appContext;
     }
 
+    /**
+     * Another way to get application context
+     */
     public static Context get(){
         return getInstance().getContext();
     }
 
-    private static ApplicationContext instance;
-
+    /**
+     * Get application context, creates new one if none exists
+     */
     public static ApplicationContext getInstance(){
-        return instance == null ?
-                (instance = new ApplicationContext()):
-                instance;
+        return mInstance == null ?
+                (mInstance = new ApplicationContext()):
+                mInstance;
     }
 
+    /**
+     * Helper method for encrypting a string using admins public key
+     */
     public String encryptForAdmin(String plain, String pubKey) throws Exception {
         return RSA.encrypt(plain, pubKey);
     }
 
+    /**
+     * Helper method for encrypting a string using user's public key
+     */
     public String encryptForUser(String plain, String pubKey) throws Exception {
         return RSA.encrypt(plain, pubKey);
     }
 
+    /**
+     * Helper method for decrypting a string using user's private key
+     */
     public String decryptForUser(String cipher, String prvKey) throws Exception {
         return RSA.decrypt(cipher, prvKey);
     }

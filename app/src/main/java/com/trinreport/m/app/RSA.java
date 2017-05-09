@@ -18,8 +18,7 @@ import javax.crypto.spec.PSource;
 
 
 /**
- * Wrapper methods for generating keys, encrypting, decryting
- * Source: https://vshivam.wordpress.com/2015/06/09/android-javascript-and-python-compatible-rsa-encryption/
+ * Wrapper methods for generating keys, encrypting, decrypting
  */
 public class RSA {
 

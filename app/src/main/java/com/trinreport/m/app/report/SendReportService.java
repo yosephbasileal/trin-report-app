@@ -21,7 +21,7 @@ import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
 import com.msopentech.thali.toronionproxy.OnionProxyManager;
 import com.trinreport.m.app.AES;
 import com.trinreport.m.app.ApplicationContext;
-import com.trinreport.m.app.ChatBook;
+import com.trinreport.m.app.DatabaseBook;
 import com.trinreport.m.app.URL;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
@@ -246,7 +246,7 @@ public class SendReportService extends IntentService {
      * Updates report status in db as "Failed"
      */
     private void recordFailure() {
-        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
+        DatabaseBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
                 "Failed to send");
     }
 
@@ -254,7 +254,7 @@ public class SendReportService extends IntentService {
      * Updates report status in db as "Sent"
      */
     private void recordSucess() {
-        ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
+        DatabaseBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId,
                 "Sent");
     }
 

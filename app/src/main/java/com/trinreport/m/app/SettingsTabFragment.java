@@ -2,7 +2,6 @@ package com.trinreport.m.app;
 
 
 import android.os.Bundle;
-import android.app.Fragment;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -11,20 +10,17 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 
 /**
- * A simple {@link Fragment} subclass.
- * Use the {@link SettingsTabFragment#newInstance} factory method to
- * create an instance of this fragment.
+ * This is fragment for tab with user settings
  */
 public class SettingsTabFragment extends PreferenceFragment
         implements Preference.OnPreferenceChangeListener {
 
+    // layout references
     private Toolbar mToolbar;
 
     /**
      * Factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @return A new instance of fragment SettingsTabFragment.
+     * this fragment
      */
     public static SettingsTabFragment newInstance() {
         SettingsTabFragment fragment = new SettingsTabFragment();
@@ -39,21 +35,22 @@ public class SettingsTabFragment extends PreferenceFragment
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         // setup toolbar
+        mToolbar = (Toolbar) getActivity().findViewById(R.id.toolbar_main);
         if (mToolbar != null) {
             ((AppCompatActivity) getActivity()).setSupportActionBar(mToolbar);
             ((AppCompatActivity) getActivity()).getSupportActionBar().setTitle("Settings");
         }
 
+        // add refernce xml
         addPreferencesFromResource(R.xml.preferences);
 
+        // bind summaries to value
         bindPreferenceSummaryToValue(findPreference("username"));
         bindPreferenceSummaryToValue(findPreference("userphone"));
         bindPreferenceSummaryToValue(findPreference("userid"));
         bindPreferenceSummaryToValue(findPreference("useremail"));
         bindPreferenceSummaryToValue(findPreference("userdorm"));
-
         //bindPreferenceSummaryToValue(findPreference("notifications"));
 
     }
@@ -68,12 +65,14 @@ public class SettingsTabFragment extends PreferenceFragment
         // set the listener to watch for value changes
         preference.setOnPreferenceChangeListener(this);
 
+        // check if notification setting is changed
         if(preference.getKey().equals("notifications")) {
             onPreferenceChange(preference,
                     PreferenceManager
                             .getDefaultSharedPreferences(preference.getContext())
                             .getBoolean(preference.getKey(), true));
         } else {
+            // all other settings
             onPreferenceChange(preference,
                     PreferenceManager
                             .getDefaultSharedPreferences(preference.getContext())

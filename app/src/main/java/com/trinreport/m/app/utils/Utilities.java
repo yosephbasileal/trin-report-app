@@ -11,9 +11,13 @@ import java.io.InputStreamReader;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * Created by bimana2 on 11/5/16.
+ * Utility functions
  */
 public class Utilities {
+    /**
+     * Validates trinity email address
+     * @param email
+     */
     public static boolean validateEmail(String email) {
         String domain = "trincoll.edu";
         String[] t;

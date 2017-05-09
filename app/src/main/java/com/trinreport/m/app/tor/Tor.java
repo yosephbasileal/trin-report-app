@@ -7,7 +7,6 @@ import android.util.Log;
 
 import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
 import com.msopentech.thali.toronionproxy.OnionProxyManager;
-import com.trinreport.m.app.ChatBook;
 
 import java.net.InetSocketAddress;
 
@@ -18,7 +17,6 @@ import cz.msebera.android.httpclient.config.RegistryBuilder;
 import cz.msebera.android.httpclient.conn.socket.ConnectionSocketFactory;
 import cz.msebera.android.httpclient.impl.client.HttpClients;
 import cz.msebera.android.httpclient.impl.conn.PoolingHttpClientConnectionManager;
-import cz.msebera.android.httpclient.protocol.HttpContext;
 import cz.msebera.android.httpclient.ssl.SSLContexts;
 
 public class Tor {
@@ -34,24 +32,30 @@ public class Tor {
     private HttpClient mHttpclient;
     private HttpClientContext mHttpContext;
     private OnionProxyManager mOnionProxyManager;
-
     private static Tor mTor;
 
+    /**
+     * Constructor for creating a new Tor connection object
+     * @param context
+     */
     public Tor(Context context) {
-        Log.d(TAG, "Tor object being created");
         // initialize tor
         mAppContext = context;
         mTorReady = false;
-        Log.d(TAG, "About to initalize");
         InitializeTor job = new InitializeTor();
         job.execute();
-        Log.d(TAG, "Called init");
     }
 
+    /**
+     * Checks if Tor is ready
+     */
     public boolean isReady() {
         return mTorReady;
     }
 
+    /**
+     * Get references to tor connection, create one if none
+     */
     public static Tor getInstance(Context context) {
         if (mTor == null) {
             mTor = new Tor(context);
@@ -59,14 +63,23 @@ public class Tor {
         return mTor;
     }
 
+    /**
+     * Get tor http client
+     */
     public HttpClient getTorClient() {
         return mHttpclient;
     }
 
+    /**
+     * Get tor http context
+     */
     public HttpClientContext getTorContext() {
         return mHttpContext;
     }
 
+    /**
+     * Asynchronous task for initializing a Tor client
+     */
     private class InitializeTor extends AsyncTask<String, Void, String> {
 
         @Override
@@ -116,7 +129,6 @@ public class Tor {
 
     /**
      * Creates a new tor client
-     * @return http client
      */
     public HttpClient getNewHttpClient() {
         Registry<ConnectionSocketFactory> reg = RegistryBuilder.<ConnectionSocketFactory>create()

@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
 
 import com.roughike.bottombar.BottomBar;
 import com.roughike.bottombar.OnTabSelectListener;
@@ -19,15 +18,18 @@ import com.trinreport.m.app.emergency.EmergencyTabFragment;
 import com.trinreport.m.app.followup.FollowupTabFragment;
 import com.trinreport.m.app.report.ReportTabFragment;
 
+/**
+ * Main activity contains a bottom navigation bar for navigating between the four tabs
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static String TAG = "MainActivity";
 
-    FragmentManager fm;
-    Fragment frag_emergency, frag_report, frag_history, frag_settings;
-    BottomBar bottomBar;
-    SharedPreferences mSharedPref;
-
+    // references
+    private FragmentManager fm;
+    private Fragment frag_emergency, frag_report, frag_history, frag_settings;
+    private BottomBar bottomBar;
+    private SharedPreferences mSharedPref;
     private Toolbar mToolbar;
 
 

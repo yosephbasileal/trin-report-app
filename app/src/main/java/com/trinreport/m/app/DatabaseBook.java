@@ -14,20 +14,19 @@ import com.trinreport.m.app.model.Report;
 import java.util.ArrayList;
 
 /**
- * Created by bimana2 on 3/24/17.
+ * Collection of methods that interface with database helper functions
  */
 
-public class ChatBook {
+public class DatabaseBook {
     private static Context mContext;
-    private static ChatBook mChatBook;
+    private static DatabaseBook mDatabaseBook;
     private static ChatDbHelper mDatabaseHelper;
     private static SQLiteDatabase mDatabase;
 
     /**
      * Constructor for RecipeBook
-     * @param context application context
      */
-    private ChatBook(Context context){
+    private DatabaseBook(Context context){
         mContext = context.getApplicationContext();
         mDatabaseHelper = new ChatDbHelper(mContext);
         mDatabase = mDatabaseHelper.getWritableDatabase();
@@ -38,22 +37,31 @@ public class ChatBook {
      * @param context applicaiton context
      * @return RecipeBook instance
      */
-    public static ChatBook getChatBook(Context context) {
-        if (mChatBook == null) {
-            mChatBook = new ChatBook(context);
+    public static DatabaseBook getChatBook(Context context) {
+        if (mDatabaseBook == null) {
+            mDatabaseBook = new DatabaseBook(context);
         }
-        return mChatBook;
+        return mDatabaseBook;
     }
 
+    /**
+     * Delete all data in database
+     */
     public void deleteAll() {
         mDatabaseHelper.onUpgrade(mDatabase, 0, 1);
     }
 
+    /**
+     * Delete all chat messages of a report
+     */
     public void deleteMessages(String reportId) {
         mDatabase.delete(ChatDbContract.MessageEntry.TABLE_NAME, ChatDbContract.MessageEntry.COLUMN_REPORT_ID + " = ?",
                 new String[]{reportId});
     }
 
+    /**
+     * Delete a report given its ID
+     */
     public void deleteReport(String reportId) {
         mDatabase.delete(ChatDbContract.ReportEntry.TABLE_NAME, ChatDbContract.ReportEntry.COLUMN_REPORT_ID + " = ?",
                 new String[]{reportId});
@@ -61,16 +69,25 @@ public class ChatBook {
                 new String[]{reportId});
     }
 
+    /**
+     * Add a new message to database
+     */
     public void addMessage(ChatMessage message) {
         ContentValues values = getContentValues(message);
         mDatabase.insert(ChatDbContract.MessageEntry.TABLE_NAME, null, values);
     }
 
+    /**
+     * Add a new report to database
+     */
     public void addReport(Report report) {
         ContentValues values = getContentValues(report);
         mDatabase.insert(ChatDbContract.ReportEntry.TABLE_NAME, null, values);
     }
 
+    /**
+     * Save filled our form values of a report to database
+     */
     public void addReportForm(String reportId, String urgency, String timestamp, String location, String description, String is_resp, String is_followup) {
         ContentValues values = new ContentValues();
         values.put(ChatDbContract.ReportEntry.COLUMN_URGENCY, urgency);
@@ -84,6 +101,9 @@ public class ChatBook {
                 new String[]{reportId});
     }
 
+    /**
+     * Update report status in database
+     */
     public void updateReportStatus(String reportId, String status) {
         ContentValues values = new ContentValues();
         values.put(ChatDbContract.ReportEntry.COLUMN_STATUS, status);

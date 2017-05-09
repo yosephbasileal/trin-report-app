@@ -19,7 +19,7 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.trinreport.m.app.ChatBook;
+import com.trinreport.m.app.DatabaseBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.model.Report;
 
@@ -95,7 +95,7 @@ public class FollowupTabFragment extends Fragment {
         mDeleteAllButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                ChatBook.getChatBook(getActivity()).deleteAll();
+                DatabaseBook.getChatBook(getActivity()).deleteAll();
                 updateReportsList();
             }
         });
@@ -223,7 +223,7 @@ public class FollowupTabFragment extends Fragment {
         @Override
         protected ArrayList<Report> doInBackground(Void... params) {
             // get reports from local db
-            ChatBook book = ChatBook.getChatBook(getActivity());
+            DatabaseBook book = DatabaseBook.getChatBook(getActivity());
             ArrayList<Report> reports = book.getReports();
             return reports;
         }

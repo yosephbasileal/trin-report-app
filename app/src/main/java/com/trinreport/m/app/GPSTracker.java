@@ -16,32 +16,32 @@ import android.util.Log;
 
 /**
  * Class for getting current location (gps and network based)
- * Source: http://stackoverflow.com/questions/1513485/how-do-i-get-the-current-gps-location-programmatically-in-android
+ * Source: http://stackoverflow.com/questions/1513485
  */
 public class GPSTracker extends Service implements LocationListener {
 
     private final Context mContext;
 
-    // Flag for GPS status
+    // flag for GPS status
     boolean isGPSEnabled = false;
 
-    // Flag for network status
+    // flag for network status
     boolean isNetworkEnabled = false;
 
-    // Flag for GPS status
+    // flag for GPS status
     boolean canGetLocation = false;
 
-    Location location; // Location
-    double latitude; // Latitude
-    double longitude; // Longitude
+    Location location;
+    double latitude;
+    double longitude;
 
-    // The minimum distance to change Updates in meters
+    // minimum distance to change updates in meters
     private static final long MIN_DISTANCE_CHANGE_FOR_UPDATES = 10; // 10 meters
 
-    // The minimum time between updates in milliseconds
+    // minimum time between updates in milliseconds
     private static final long MIN_TIME_BW_UPDATES = 1000 * 60 * 1; // 1 minute
 
-    // Declaring a Location Manager
+    // declare Location Manager
     protected LocationManager locationManager;
 
     public GPSTracker(Context context) {
@@ -54,16 +54,16 @@ public class GPSTracker extends Service implements LocationListener {
             locationManager = (LocationManager) mContext
                     .getSystemService(LOCATION_SERVICE);
 
-            // Getting GPS status
+            // get GPS status
             isGPSEnabled = locationManager
                     .isProviderEnabled(LocationManager.GPS_PROVIDER);
 
-            // Getting network status
+            // get network status
             isNetworkEnabled = locationManager
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-                // No network provider is enabled
+                // no network provider is enabled
             } else {
                 this.canGetLocation = true;
                 if (isNetworkEnabled) {
@@ -81,7 +81,7 @@ public class GPSTracker extends Service implements LocationListener {
                         }
                     }
                 }
-                // If GPS enabled, get latitude/longitude using GPS Services
+                // if GPS enabled, get latitude/longitude using GPS Services
                 if (isGPSEnabled) {
                     if (location == null) {
                         locationManager.requestLocationUpdates(
@@ -111,7 +111,7 @@ public class GPSTracker extends Service implements LocationListener {
 
     /**
      * Stop using GPS listener
-     * Calling this function will stop using GPS in your app.
+     * Calling this function will stop using GPS
      * */
     public void stopUsingGPS(){
         try {

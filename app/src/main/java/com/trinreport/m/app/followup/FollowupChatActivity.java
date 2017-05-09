@@ -2,7 +2,6 @@ package com.trinreport.m.app.followup;
 
 import android.app.ProgressDialog;
 import android.content.SharedPreferences;
-import android.media.Image;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,7 +19,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,31 +32,21 @@ import com.android.volley.toolbox.Volley;
 import com.msopentech.thali.android.toronionproxy.AndroidOnionProxyManager;
 import com.msopentech.thali.toronionproxy.OnionProxyManager;
 import com.trinreport.m.app.ApplicationContext;
-import com.trinreport.m.app.ChatBook;
+import com.trinreport.m.app.DatabaseBook;
 import com.trinreport.m.app.R;
-import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.URL;
 import com.trinreport.m.app.model.ChatMessage;
 import com.trinreport.m.app.model.Report;
-import com.trinreport.m.app.report.AddReportActivity;
 import com.trinreport.m.app.report.SendReportService;
 import com.trinreport.m.app.tor.MyConnectionSocketFactory;
 import com.trinreport.m.app.tor.MySSLConnectionSocketFactory;
-import com.trinreport.m.app.tor.Tor;
 import com.trinreport.m.app.utils.Utilities;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
-import java.security.KeyPair;
-import java.text.Format;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -138,7 +126,7 @@ public class FollowupChatActivity extends AppCompatActivity {
         // get data from intent
         mReportId = getIntent().getStringExtra(EXTRA_REPORT_ID);
         mReportTitle = getIntent().getStringExtra(EXTRA_THREAD_TITLE);
-        mReport = ChatBook.getChatBook(this).getReport(mReportId);
+        mReport = DatabaseBook.getChatBook(this).getReport(mReportId);
         Log.d(TAG, "Report: " + mReport.toString());
 
         // get references
@@ -350,7 +338,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
         @Override
         protected ArrayList<ChatMessage> doInBackground(Void... params) {
-            ChatBook book = ChatBook.getChatBook(getApplicationContext());
+            DatabaseBook book = DatabaseBook.getChatBook(getApplicationContext());
             ArrayList<ChatMessage> messages = book.getMessages(mReportId);
             return messages;
         }
@@ -390,7 +378,7 @@ public class FollowupChatActivity extends AppCompatActivity {
         mMessagesList.add(message);
 
         // save to local db
-        ChatBook.getChatBook(this).addMessage(message);
+        DatabaseBook.getChatBook(this).addMessage(message);
         updateMessagesList();
 
         // send to server
@@ -443,7 +431,7 @@ public class FollowupChatActivity extends AppCompatActivity {
             JSONArray jsonarray = jsonObj.getJSONArray("messages");
 
             // delete existing messages
-            ChatBook.getChatBook(getApplicationContext()).deleteMessages(mReportId);
+            DatabaseBook.getChatBook(getApplicationContext()).deleteMessages(mReportId);
 
             // add new messages to db
             for (int j = 0; j < jsonarray.length(); j++) {
@@ -459,7 +447,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
                 // create Message object and add to db
                 ChatMessage message = new ChatMessage(from_admin, content, timestamp, mReportId);
-                ChatBook.getChatBook(getApplicationContext()).addMessage(message);
+                DatabaseBook.getChatBook(getApplicationContext()).addMessage(message);
             }
 
             // update list to refresh UI
@@ -783,7 +771,7 @@ public class FollowupChatActivity extends AppCompatActivity {
 
                 // chagne status to sending
                 String status = "Sending";
-                ChatBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId, status);
+                DatabaseBook.getChatBook(getApplicationContext()).updateReportStatus(mReportId, status);
 
                 // get data from db
                 data.put("public_key", mReport.getPubKey());

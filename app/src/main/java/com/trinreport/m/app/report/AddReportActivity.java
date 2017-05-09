@@ -34,7 +34,7 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.trinreport.m.app.ChatBook;
+import com.trinreport.m.app.DatabaseBook;
 import com.trinreport.m.app.R;
 import com.trinreport.m.app.RSA;
 import com.trinreport.m.app.model.Report;
@@ -584,7 +584,7 @@ public class AddReportActivity extends AppCompatActivity implements
                 // show error
                 showError("Something when wrong! Try again.");
                 // delete report from db if created
-                ChatBook.getChatBook(getApplicationContext()).deleteReport(mReportId);
+                DatabaseBook.getChatBook(getApplicationContext()).deleteReport(mReportId);
             }
         }
 
@@ -603,7 +603,7 @@ public class AddReportActivity extends AppCompatActivity implements
                 // save in local db
                 String is_anon = (mIsAnonymous)? "1": "0";
                 String status = "Sending";
-                ChatBook.getChatBook(getApplicationContext()).addReport(
+                DatabaseBook.getChatBook(getApplicationContext()).addReport(
                         new Report(mReportId,
                                 privateKeyPem,
                                 mType,
@@ -630,7 +630,7 @@ public class AddReportActivity extends AppCompatActivity implements
                 data.put("follow_up_enabled", mFollowupEnabled + "");
 
                 // save report form to db
-                ChatBook.getChatBook(getApplicationContext()).addReportForm(
+                DatabaseBook.getChatBook(getApplicationContext()).addReportForm(
                         mReportId,
                         mUrgency,
                         timestamp,
