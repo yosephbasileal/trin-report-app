@@ -4,9 +4,12 @@ package com.trinreport.m.app.emergency;
 import android.app.Fragment;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.location.Location;
+import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -98,13 +101,16 @@ public class EmergencyTabFragment extends Fragment {
             @Override
             public boolean onLongClick(View v) {
                 try {
+                    // disable button
+                    mEmergencyButton.setEnabled(false);
+
                     //get current location
                     mLocation = mGpsTracker.getLocation();
 
                     // validate location
                     if(!validate_location()) {
-                        Toast.makeText(getActivity(), "Call 911. Your are too far from campus.",
-                        Toast.LENGTH_LONG).show();
+                        // reenable button
+                        mEmergencyButton.setEnabled(true);
                         return false;
                     }
 
@@ -144,13 +150,24 @@ public class EmergencyTabFragment extends Fragment {
      */
     private boolean validate_location() {
         List<LatLng> poly = new ArrayList<>();
-        poly.add(new LatLng(41.756097, -72.697784)); // middle of Pope Park
-        poly.add(new LatLng(41.739487, -72.697258)); // New Britain and Hillside ave
-        poly.add(new LatLng(41.743114, -72.682715)); // Maple ave and Webster st
-        poly.add(new LatLng(41.756292, -72.682463)); // Washington st and Ward st
-        boolean inside = PolyUtil.containsLocation(
+        poly.add(new LatLng(41.751164, -72.697759)); // Glendale and Hillside ave
+        poly.add(new LatLng(41.742359, -72.698027)); // Hughes St and Hillside ave
+        poly.add(new LatLng(41.743191, -72.682656)); // Maple ave and King st
+        poly.add(new LatLng(41.751403, -72.683105)); // Webster st and Vernon st
+        boolean inside = false;
+        if(mLocation == null) {
+            Toast.makeText(getActivity(), "Call 911. GPS not working.",
+                    Toast.LENGTH_LONG).show();
+            return inside;
+        }
+
+        inside = PolyUtil.containsLocation(
                 new LatLng(mLocation.getLatitude(), mLocation.getLongitude()), poly, true
         );
+        if(!inside) {
+            Toast.makeText(getActivity(), "Call 911. Your are too far from campus.",
+                    Toast.LENGTH_LONG).show();
+        }
         return inside;
     }
 
@@ -186,6 +203,9 @@ public class EmergencyTabFragment extends Fragment {
                     startEmergencyActivity(emergency_id);
                 } catch (JSONException e) {
                     Log.d(TAG, "JSONException: " + e.toString());
+                    Toast.makeText(getActivity(), "Something went wrong! Try again.",
+                            Toast.LENGTH_LONG).show();
+                    mEmergencyButton.setEnabled(true);
                 }
             }
         }, new Response.ErrorListener() {
@@ -194,6 +214,7 @@ public class EmergencyTabFragment extends Fragment {
                 Log.d(TAG, "VolleyError: " + error.getMessage());
                 Toast.makeText(getActivity(), "Connection failed! Try again.",
                         Toast.LENGTH_LONG).show();
+                mEmergencyButton.setEnabled(true);
             }
         }) {
             protected Map<String, String> getParams() {
@@ -223,6 +244,9 @@ public class EmergencyTabFragment extends Fragment {
                 } catch (Exception e) {
                     Log.d(TAG, "Encryption error: " + e.getMessage());
                     e.printStackTrace();
+                    Toast.makeText(getActivity(), "Something went wrong! Try again.",
+                            Toast.LENGTH_LONG).show();
+                    mEmergencyButton.setEnabled(true);
                     return null;
                 }
 

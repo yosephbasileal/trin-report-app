@@ -15,29 +15,32 @@
         android:paddingTop="3dp"
         app:theme="@style/ThemeOverlay.AppCompat.Light"
         android:layout_alignParentTop="true"
-        android:background="@drawable/border_bottom"
-        android:layout_centerVertical="true">
+        android:background="@color/colorPrimary"
+        android:layout_centerVertical="true"
+        app:titleTextColor="@color/colorAccent">
 
         <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/ic_delete_forever_black_24dp"
+            android:src="@drawable/ic_delete_sweep_white_24dp"
             android:layout_gravity="right"
             android:id="@+id/delete_all_tables"
             android:scaleType="fitCenter"
             android:padding="10dp"
             android:visibility="gone"
+            android:background="@color/colorPrimary"
             />
 
         <ImageButton
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:src="@drawable/ic_refresh_black_24dp"
+            android:src="@drawable/ic_refresh_white_24dp"
             android:layout_gravity="right"
             android:id="@+id/refresh_followup"
             android:scaleType="fitCenter"
             android:padding="10dp"
             android:visibility="gone"
+            android:background="@color/colorPrimary"
             />
     </android.support.v7.widget.Toolbar>
 

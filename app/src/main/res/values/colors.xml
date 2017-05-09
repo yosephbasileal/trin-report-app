@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#2b2929</color>
-    <color name="colorPrimaryDark">#595a63</color>
-    <color name="colorAccent">#e65100</color>
-    <color name="colorAccentLight">#b7e65100</color>
-
+    <color name="colorPrimary">#07193c</color>
+    <color name="colorPrimaryDark">#07193c</color>
+    <color name="colorAccent">#d9af0b</color>
+    <color name="colorAccentLight">#d9af0b</color>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
     <color name="colorActionBar">#00f3f3f3</color>
 </resources>

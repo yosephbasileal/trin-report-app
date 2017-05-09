@@ -5,7 +5,7 @@
     android:id="@+id/activity_emergency"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="5dp"
+
     tools:context="com.trinreport.m.app.emergency.Emergency"
     android:orientation="vertical"
     android:background="#ffffff">
@@ -17,9 +17,10 @@
             android:id="@+id/toolbar_emergency"
             android:layout_width="match_parent"
             android:layout_height="56dp"
-            android:background="@color/colorActionBar"
+            android:background="@color/colorPrimary"
             app:theme="@style/ThemeOverlay.AppCompat.Light"
-            android:layout_alignParentTop="true">
+            android:layout_alignParentTop="true"
+            app:titleTextColor="@color/colorAccent">
         </android.support.v7.widget.Toolbar>
         <TextView
             android:layout_width="match_parent"

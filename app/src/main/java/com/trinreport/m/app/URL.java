@@ -9,7 +9,7 @@ public class URL {
     // domains
     public static String AUTH_SERVER_DOMAIN = "https://trinreport.appspot.com";
     public static String RDDP_SERVER_DOMAIN = "https://trinreport.com";
-    //public static String RDDP_SERVER_DOMAIN = "https://c62a14e0.ngrok.io";
+    //public static String RDDP_SERVER_DOMAIN = "https://b57c2c71.ngrok.io";
 
     // authentication urls
     public static String REQUEST_AUTH_TOKEN = AUTH_SERVER_DOMAIN + "/request";

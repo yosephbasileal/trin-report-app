@@ -160,7 +160,7 @@ public class FollowupChatActivity extends AppCompatActivity {
             setSupportActionBar(mToolbar);
             getSupportActionBar().setTitle(mReportTitle);
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_36dp);
         }
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override

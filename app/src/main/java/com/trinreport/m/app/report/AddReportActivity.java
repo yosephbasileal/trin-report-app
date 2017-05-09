@@ -140,7 +140,7 @@ public class AddReportActivity extends AppCompatActivity implements
             setSupportActionBar(mToolbar);
             getSupportActionBar().setTitle("New Report");
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_close_white_36dp);
         }
         mToolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
